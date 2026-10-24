@@ -1,0 +1,18 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Configurations>Debug;Release;ExportDebug;ExportRelease</Configurations>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>0.2.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../src/Guild.Application/Guild.Application.csproj" />
+  </ItemGroup>
+  <Target Name="CopyTechnicalContent" BeforeTargets="BeforeBuild" Condition="Exists('../data/tech-content.json')">
+    <MakeDir Directories="$(MSBuildProjectDirectory)/content" />
+    <Copy SourceFiles="../data/tech-content.json" DestinationFiles="$(MSBuildProjectDirectory)/content/tech-content.json" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

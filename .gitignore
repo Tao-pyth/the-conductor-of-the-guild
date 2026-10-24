@@ -1,0 +1,14 @@
+.tools/
+**/bin/
+**/obj/
+.godot/
+**/.godot/
+artifacts/
+TestResults/
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.user
+docs/~$*
+game/content/tech-content.json

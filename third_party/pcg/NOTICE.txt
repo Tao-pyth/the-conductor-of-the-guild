@@ -1,0 +1,13 @@
+PCG Random Number Generation reference implementation
+Copyright 2014 Melissa O'Neill <oneill@pcg-random.org>
+
+Reference source: https://github.com/imneme/pcg-c-basic
+Project and licensing information: https://www.pcg-random.org/
+Reference license: Apache License, Version 2.0 (see LICENSE.txt).
+
+Local adaptation notice:
+The Conductor of the Guild implements the PCG-XSH-RR 64/32 reference
+algorithm in C#. The local adaptation provides explicit constructor-based
+seeding, a saved-state record and restore operation, and unbiased bounded
+integer selection. It does not include the C implementation's global RNG.
+This notice records the adaptation; it is not an upstream NOTICE file.

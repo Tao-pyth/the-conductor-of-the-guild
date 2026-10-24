@@ -1,0 +1,55 @@
+{
+  "retrieved": "2026-10-24",
+  "sources": [
+    {
+      "sha256": "B0435E3B3E4E55238F05F4B306F30524A1B2E20147810D436EAA554FA6855C80",
+      "file": "godot/LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/godotengine/godot/4.7.2-stable/LICENSE.txt"
+    },
+    {
+      "sha256": "CB1980C88089573BCACD7221D777C689BB8BBD778799F24C27FCA0FE5F774D6D",
+      "file": "godot/COPYRIGHT.txt",
+      "source": "https://raw.githubusercontent.com/godotengine/godot/4.7.2-stable/COPYRIGHT.txt"
+    },
+    {
+      "sha256": "6CA51D335B9DE108EA53C5621E820C187D98C6FAF92E14C8413DDB946B5E56CF",
+      "file": "godot/AUTHORS.md",
+      "source": "https://raw.githubusercontent.com/godotengine/godot/4.7.2-stable/AUTHORS.md"
+    },
+    {
+      "sha256": "B40930BBCF80744C86C46A12BC9DA056641D722716C378F5659B9E555EF833E1",
+      "file": "pcg/LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/imneme/pcg-c-basic/master/LICENSE.txt"
+    },
+    {
+      "sha256": "AE48DF11A335DC1A615F4F938B69CBA73BCF4485C4F97AF49B38EFB0F216353B",
+      "file": "microsoft-data-sqlite/LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/dotnet/efcore/v10.0.13/LICENSE.txt"
+    },
+    {
+      "sha256": "CFC7749B96F63BD31C3C42B5C471BF756814053E847C10F3EB003417BC523D30",
+      "file": "sqlitepclraw/LICENSE.TXT",
+      "source": "https://raw.githubusercontent.com/ericsink/SQLitePCL.raw/main/LICENSE.TXT"
+    },
+    {
+      "sha256": "5A1AB2F670F86DD2F8D42E40A8459CC278CA6D5225A7E2A5FA3EA0184396A6D9",
+      "file": "sqlitepclraw/NOTICE.TXT",
+      "source": "https://raw.githubusercontent.com/ericsink/SQLitePCL.raw/main/NOTICE.TXT"
+    },
+    {
+      "sha256": "C9053892D578840A196D588FF68BAA9BC0F5240EB215FB9CF91CD6B0B3209305",
+      "file": "sqlite/LICENSE.md",
+      "source": "https://raw.githubusercontent.com/sqlite/sqlite/master/LICENSE.md"
+    },
+    {
+      "sha256": "D7A68596AB69B06F51CA278A6545148E4269A9381C26D597C13DF5D88E08CF5B",
+      "file": "dotnet/LICENSE.TXT",
+      "source": "Microsoft.NETCore.App.Runtime.win-x64 10.0.13 NuGet package/LICENSE.TXT"
+    },
+    {
+      "sha256": "6D15E10A101C6BFFF2AB4429ED061BF76C456FC4B23AD6B03E0D0F8377148A21",
+      "file": "dotnet/THIRD-PARTY-NOTICES.TXT",
+      "source": "Microsoft.NETCore.App.Runtime.win-x64 10.0.13 NuGet package/THIRD-PARTY-NOTICES.TXT"
+    }
+  ]
+}

@@ -1,0 +1,912 @@
+{
+  "version": "tech-fixture-1",
+  "schemaVersion": 1,
+  "technicalFixture": true,
+  "parameters": [
+    {
+      "id": "str",
+      "unit": "ability-points",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "vit",
+      "unit": "ability-points",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "dex",
+      "unit": "ability-points",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "agi",
+      "unit": "ability-points",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "int",
+      "unit": "ability-points",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "max-hp",
+      "unit": "hp",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "physical-defense",
+      "unit": "combat-points",
+      "type": "rational",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "magical-defense",
+      "unit": "combat-points",
+      "type": "rational",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "attack-interval-ms",
+      "unit": "ms",
+      "type": "duration",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "move-centi-per-second",
+      "unit": "centi-tiles-per-second",
+      "type": "distance",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "required-xp",
+      "unit": "xp",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "attack-power",
+      "unit": "combat-points",
+      "type": "rational",
+      "minimum": {
+        "numerator": "0",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "current-hp",
+      "unit": "hp",
+      "type": "integer",
+      "minimum": {
+        "numerator": "0",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "xp",
+      "unit": "xp",
+      "type": "integer",
+      "minimum": {
+        "numerator": "0",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "resources",
+      "unit": "resources",
+      "type": "integer",
+      "minimum": {
+        "numerator": "0",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "draw-weight",
+      "unit": "weight",
+      "type": "rational",
+      "minimum": {
+        "numerator": "0",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "candidate-count",
+      "unit": "candidates",
+      "type": "integer",
+      "minimum": {
+        "numerator": "0",
+        "denominator": "1"
+      },
+      "maximum": {
+        "numerator": "8",
+        "denominator": "1"
+      }
+    },
+    {
+      "id": "rank",
+      "unit": "rank",
+      "type": "rank",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": null
+    },
+    {
+      "id": "level",
+      "unit": "level",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": {
+        "numerator": "10",
+        "denominator": "1"
+      }
+    },
+    {
+      "id": "blessing-rank",
+      "unit": "rank",
+      "type": "integer",
+      "minimum": {
+        "numerator": "1",
+        "denominator": "1"
+      },
+      "maximum": {
+        "numerator": "3",
+        "denominator": "1"
+      }
+    },
+    {
+      "id": "crit-basis-points",
+      "unit": "basis-points",
+      "type": "probability",
+      "minimum": {
+        "numerator": "0",
+        "denominator": "1"
+      },
+      "maximum": {
+        "numerator": "10000",
+        "denominator": "1"
+      }
+    }
+  ],
+  "skills": [
+    {
+      "id": "tech-slash",
+      "name": "検証・連撃",
+      "isUltimate": false,
+      "cooldownMs": {
+        "numerator": "3000",
+        "denominator": "1"
+      },
+      "castMs": 100,
+      "recoveryMs": 250,
+      "priority": 10,
+      "rangeCenti": 160,
+      "effects": [
+        {
+          "id": "tech-slash-damage",
+          "kind": "damage",
+          "amount": {
+            "numerator": "7",
+            "denominator": "5"
+          },
+          "status": null,
+          "durationMs": 0,
+          "tickMs": 0,
+          "derived": false
+        }
+      ],
+      "generationCost": {
+        "numerator": "10",
+        "denominator": "1"
+      }
+    },
+    {
+      "id": "tech-mend",
+      "name": "検証・回復",
+      "isUltimate": false,
+      "cooldownMs": {
+        "numerator": "5000",
+        "denominator": "1"
+      },
+      "castMs": 100,
+      "recoveryMs": 250,
+      "priority": 20,
+      "rangeCenti": 300,
+      "effects": [
+        {
+          "id": "tech-mend-heal",
+          "kind": "heal",
+          "amount": {
+            "numerator": "3",
+            "denominator": "2"
+          },
+          "status": null,
+          "durationMs": 0,
+          "tickMs": 0,
+          "derived": false
+        }
+      ],
+      "generationCost": {
+        "numerator": "10",
+        "denominator": "1"
+      }
+    },
+    {
+      "id": "tech-burn-shot",
+      "name": "検証・炎の矢",
+      "isUltimate": false,
+      "cooldownMs": {
+        "numerator": "4500",
+        "denominator": "1"
+      },
+      "castMs": 100,
+      "recoveryMs": 250,
+      "priority": 10,
+      "rangeCenti": 500,
+      "effects": [
+        {
+          "id": "tech-burn-damage",
+          "kind": "damage",
+          "amount": {
+            "numerator": "1",
+            "denominator": "1"
+          },
+          "status": null,
+          "durationMs": 0,
+          "tickMs": 0,
+          "derived": false
+        },
+        {
+          "id": "tech-burn-status",
+          "kind": "status",
+          "amount": {
+            "numerator": "2",
+            "denominator": "25"
+          },
+          "status": "burn",
+          "durationMs": 4000,
+          "tickMs": 1000,
+          "derived": false
+        }
+      ],
+      "generationCost": {
+        "numerator": "10",
+        "denominator": "1"
+      }
+    },
+    {
+      "id": "tech-slow",
+      "name": "検証・鈍足",
+      "isUltimate": false,
+      "cooldownMs": {
+        "numerator": "4000",
+        "denominator": "1"
+      },
+      "castMs": 0,
+      "recoveryMs": 250,
+      "priority": 5,
+      "rangeCenti": 300,
+      "effects": [
+        {
+          "id": "tech-slow-status",
+          "kind": "status",
+          "amount": {
+            "numerator": "1",
+            "denominator": "4"
+          },
+          "status": "slow",
+          "durationMs": 3000,
+          "tickMs": 0,
+          "derived": false
+        }
+      ],
+      "generationCost": {
+        "numerator": "10",
+        "denominator": "1"
+      }
+    },
+    {
+      "id": "tech-ultimate",
+      "name": "検証・大打撃",
+      "isUltimate": true,
+      "cooldownMs": {
+        "numerator": "12000",
+        "denominator": "1"
+      },
+      "castMs": 250,
+      "recoveryMs": 500,
+      "priority": 30,
+      "rangeCenti": 300,
+      "effects": [
+        {
+          "id": "tech-ultimate-damage",
+          "kind": "damage",
+          "amount": {
+            "numerator": "5",
+            "denominator": "2"
+          },
+          "status": null,
+          "durationMs": 0,
+          "tickMs": 0,
+          "derived": false
+        }
+      ],
+      "generationCost": {
+        "numerator": "20",
+        "denominator": "1"
+      }
+    }
+  ],
+  "weaponTemplates": [
+    {
+      "id": "tech-sword",
+      "name": "検証用の剣",
+      "weaponType": "sword",
+      "basePower": {
+        "numerator": "18",
+        "denominator": "1"
+      },
+      "attackIntervalMs": {
+        "numerator": "1000",
+        "denominator": "1"
+      },
+      "rangeCenti": 150,
+      "projectileSpeedCentiPerSecond": 0,
+      "skillIds": [
+        "tech-slash",
+        "tech-slash"
+      ],
+      "budget": {
+        "numerator": "100",
+        "denominator": "1"
+      },
+      "compatibleSkillIds": [
+        "tech-slash",
+        "tech-ultimate"
+      ]
+    },
+    {
+      "id": "tech-spear",
+      "name": "検証用の槍",
+      "weaponType": "spear",
+      "basePower": {
+        "numerator": "16",
+        "denominator": "1"
+      },
+      "attackIntervalMs": {
+        "numerator": "1200",
+        "denominator": "1"
+      },
+      "rangeCenti": 220,
+      "projectileSpeedCentiPerSecond": 0,
+      "skillIds": [
+        "tech-slash"
+      ],
+      "budget": {
+        "numerator": "100",
+        "denominator": "1"
+      },
+      "compatibleSkillIds": [
+        "tech-slash",
+        "tech-slow",
+        "tech-ultimate"
+      ]
+    },
+    {
+      "id": "tech-hammer",
+      "name": "検証用の槌",
+      "weaponType": "hammer",
+      "basePower": {
+        "numerator": "24",
+        "denominator": "1"
+      },
+      "attackIntervalMs": {
+        "numerator": "1500",
+        "denominator": "1"
+      },
+      "rangeCenti": 150,
+      "projectileSpeedCentiPerSecond": 0,
+      "skillIds": [
+        "tech-ultimate"
+      ],
+      "budget": {
+        "numerator": "100",
+        "denominator": "1"
+      },
+      "compatibleSkillIds": [
+        "tech-slash",
+        "tech-ultimate"
+      ]
+    },
+    {
+      "id": "tech-bow",
+      "name": "検証用の弓",
+      "weaponType": "bow",
+      "basePower": {
+        "numerator": "16",
+        "denominator": "1"
+      },
+      "attackIntervalMs": {
+        "numerator": "1100",
+        "denominator": "1"
+      },
+      "rangeCenti": 500,
+      "projectileSpeedCentiPerSecond": 900,
+      "skillIds": [
+        "tech-burn-shot",
+        "tech-slow"
+      ],
+      "budget": {
+        "numerator": "100",
+        "denominator": "1"
+      },
+      "compatibleSkillIds": [
+        "tech-burn-shot",
+        "tech-slow",
+        "tech-ultimate"
+      ]
+    },
+    {
+      "id": "tech-staff",
+      "name": "検証用の杖",
+      "weaponType": "staff",
+      "basePower": {
+        "numerator": "14",
+        "denominator": "1"
+      },
+      "attackIntervalMs": {
+        "numerator": "1200",
+        "denominator": "1"
+      },
+      "rangeCenti": 450,
+      "projectileSpeedCentiPerSecond": 700,
+      "skillIds": [
+        "tech-mend",
+        "tech-slow",
+        "tech-ultimate"
+      ],
+      "budget": {
+        "numerator": "100",
+        "denominator": "1"
+      },
+      "compatibleSkillIds": [
+        "tech-mend",
+        "tech-slow",
+        "tech-ultimate"
+      ]
+    }
+  ],
+  "blessings": [
+    {
+      "id": "tech-strength",
+      "name": "検証・剛力",
+      "acquisition": "normal",
+      "rarity": 1,
+      "tags": [
+        "base",
+        "attack"
+      ],
+      "modifiers": [
+        {
+          "id": "tech-strength-str",
+          "parameterId": "str",
+          "stage": "fixed",
+          "amount": {
+            "numerator": "2",
+            "denominator": "1"
+          },
+          "skillId": null,
+          "slot": null,
+          "condition": null
+        }
+      ]
+    },
+    {
+      "id": "tech-vitality",
+      "name": "検証・活力",
+      "acquisition": "normal",
+      "rarity": 1,
+      "tags": [
+        "base",
+        "defense"
+      ],
+      "modifiers": [
+        {
+          "id": "tech-vitality-vit",
+          "parameterId": "vit",
+          "stage": "fixed",
+          "amount": {
+            "numerator": "2",
+            "denominator": "1"
+          },
+          "skillId": null,
+          "slot": null,
+          "condition": null
+        }
+      ]
+    },
+    {
+      "id": "tech-fused",
+      "name": "検証・剛健",
+      "acquisition": "fusion",
+      "rarity": 3,
+      "tags": [
+        "base",
+        "attack",
+        "defense"
+      ],
+      "modifiers": [
+        {
+          "id": "tech-fused-str",
+          "parameterId": "str",
+          "stage": "fixed",
+          "amount": {
+            "numerator": "4",
+            "denominator": "3"
+          },
+          "skillId": null,
+          "slot": null,
+          "condition": null
+        },
+        {
+          "id": "tech-fused-vit",
+          "parameterId": "vit",
+          "stage": "fixed",
+          "amount": {
+            "numerator": "4",
+            "denominator": "3"
+          },
+          "skillId": null,
+          "slot": null,
+          "condition": null
+        }
+      ]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "tech-fusion",
+      "firstBlessingId": "tech-strength",
+      "secondBlessingId": "tech-vitality",
+      "resultBlessingId": "tech-fused"
+    }
+  ],
+  "stages": [
+    {
+      "id": "tech-first-defense",
+      "name": "技術検証・初回防衛",
+      "rank": "1",
+      "rewardRank": "1",
+      "initialResources": "1000",
+      "defenseHp": 20,
+      "mapWidth": 16,
+      "mapHeight": 10,
+      "path": [
+        {
+          "x": 0,
+          "y": 5
+        },
+        {
+          "x": 1,
+          "y": 5
+        },
+        {
+          "x": 2,
+          "y": 5
+        },
+        {
+          "x": 3,
+          "y": 5
+        },
+        {
+          "x": 4,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 5
+        },
+        {
+          "x": 6,
+          "y": 5
+        },
+        {
+          "x": 7,
+          "y": 5
+        },
+        {
+          "x": 8,
+          "y": 5
+        },
+        {
+          "x": 9,
+          "y": 5
+        },
+        {
+          "x": 10,
+          "y": 5
+        },
+        {
+          "x": 11,
+          "y": 5
+        },
+        {
+          "x": 12,
+          "y": 5
+        },
+        {
+          "x": 13,
+          "y": 5
+        },
+        {
+          "x": 14,
+          "y": 5
+        },
+        {
+          "x": 15,
+          "y": 5
+        }
+      ],
+      "waves": [
+        {
+          "number": 1,
+          "enemyCount": 2,
+          "enemyLevel": 1,
+          "enemyHp": {
+            "numerator": "43",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "1",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "4",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": false
+        },
+        {
+          "number": 2,
+          "enemyCount": 3,
+          "enemyLevel": 2,
+          "enemyHp": {
+            "numerator": "51",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "2",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "5",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": false
+        },
+        {
+          "number": 3,
+          "enemyCount": 3,
+          "enemyLevel": 3,
+          "enemyHp": {
+            "numerator": "59",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "3",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "6",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": true
+        },
+        {
+          "number": 4,
+          "enemyCount": 4,
+          "enemyLevel": 4,
+          "enemyHp": {
+            "numerator": "67",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "4",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "7",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": false
+        },
+        {
+          "number": 5,
+          "enemyCount": 4,
+          "enemyLevel": 5,
+          "enemyHp": {
+            "numerator": "75",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "5",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "8",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": false
+        },
+        {
+          "number": 6,
+          "enemyCount": 5,
+          "enemyLevel": 6,
+          "enemyHp": {
+            "numerator": "83",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "6",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "9",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": true
+        },
+        {
+          "number": 7,
+          "enemyCount": 5,
+          "enemyLevel": 7,
+          "enemyHp": {
+            "numerator": "91",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "7",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "10",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": false
+        },
+        {
+          "number": 8,
+          "enemyCount": 6,
+          "enemyLevel": 8,
+          "enemyHp": {
+            "numerator": "99",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "8",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "11",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": false
+        },
+        {
+          "number": 9,
+          "enemyCount": 6,
+          "enemyLevel": 9,
+          "enemyHp": {
+            "numerator": "107",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "9",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "12",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": true
+        },
+        {
+          "number": 10,
+          "enemyCount": 7,
+          "enemyLevel": 10,
+          "enemyHp": {
+            "numerator": "115",
+            "denominator": "1"
+          },
+          "enemyDefense": {
+            "numerator": "10",
+            "denominator": "1"
+          },
+          "enemyPower": {
+            "numerator": "13",
+            "denominator": "1"
+          },
+          "enemySpeedCentiPerSecond": 90,
+          "spawnIntervalMs": 900,
+          "attacksAdventurers": false
+        }
+      ]
+    }
+  ]
+}

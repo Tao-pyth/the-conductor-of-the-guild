@@ -1,0 +1,14 @@
+SQLitePCLRaw NuGet package metadata notices
+
+Packages: SQLitePCLRaw.bundle_e_sqlite3, SQLitePCLRaw.core,
+SQLitePCLRaw.lib.e_sqlite3, SQLitePCLRaw.provider.e_sqlite3
+Version: 2.1.13
+Author: Eric Sink
+Copyright 2014-2024 SourceGear, LLC
+Declared package license: Apache-2.0
+Repository: https://github.com/ericsink/SQLitePCL.raw
+
+The copyright and declared license above are retained from the installed
+2.1.13 packages' .nuspec metadata. LICENSE.TXT and NOTICE.TXT are the
+upstream repository's common license and notice documents. Their source
+URLs and exact file hashes are recorded in ../sources.json.

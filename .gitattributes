@@ -1,0 +1,15 @@
+* text=auto
+*.cs text eol=lf
+*.csproj text eol=lf
+*.props text eol=lf
+*.json text eol=lf
+*.md text eol=lf whitespace=-blank-at-eol,-blank-at-eof
+*.sln text eol=crlf
+*.ps1 text eol=crlf
+*.godot text eol=lf
+*.tscn text eol=lf
+*.cfg text eol=lf
+*.uid text eol=lf
+*.xlsx -text
+# Preserve upstream notice bytes and their recorded hashes, including formatting.
+third_party/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
