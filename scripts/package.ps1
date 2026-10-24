@@ -2,7 +2,7 @@
 param(
     [string]$GodotPath = 'godot',
     [string]$DotnetPath = 'dotnet',
-    [string]$Version = '0.2.0',
+    [string]$Version = '0.3.0',
     [string]$OutputDirectory,
     [switch]$SkipBuild
 )
@@ -28,10 +28,15 @@ $projectSettings = Get-Content -LiteralPath (Join-Path $gameDirectory 'project.g
 if ($projectSettings -notmatch ('(?m)^config/version="' + [regex]::Escape($Version) + '"\r?$')) {
     throw 'パッケージ名の版と project.godot の版が一致しません。版情報を更新してから実行してください。'
 }
-$releaseDocuments = @(
-    'user_guide.md', 'technical_specification.md', 'verification.md',
-    'release_contract_v0.2.0.md', 'implementation_contract.md', 'release_notes_v0.2.0.md'
-)
+$releaseDocuments = @('user_guide.md', 'technical_specification.md', 'verification.md', 'implementation_contract.md')
+if ($Version -like '0.3.0*') {
+    $releaseDocuments += @('invasion_mode_spec_v0.3.0_draft.md', 'invasion_verification_v0.3.0.md')
+    if ($Version -notlike '*dev*') {
+        $releaseDocuments += @('release_contract_v0.3.0.md', 'release_notes_v0.3.0.md')
+    }
+} else {
+    $releaseDocuments += @('release_contract_v0.2.0.md', 'release_notes_v0.2.0.md')
+}
 foreach ($releaseDocument in $releaseDocuments) {
     if (-not (Test-Path -LiteralPath (Join-Path (Join-Path $projectRoot 'docs') $releaseDocument))) {
         throw ('配布用文書がありません: docs/' + $releaseDocument)
@@ -85,13 +90,35 @@ New-Item -ItemType Directory -Path $packageDocs -Force | Out-Null
 foreach ($releaseDocument in $releaseDocuments) {
     Copy-Item -LiteralPath (Join-Path (Join-Path $projectRoot 'docs') $releaseDocument) -Destination (Join-Path $packageDocs $releaseDocument)
 }
-# Candidate catalogues and the design workbook remain in the repository. Their
-# reference from the small technical guide points to the versioned source page.
-$packagedTechnicalSpec = Join-Path $packageDocs 'technical_specification.md'
-$packagedSpecText = Get-Content -LiteralPath $packagedTechnicalSpec -Raw
-$packagedSpecText.Replace('](specification_status_v0.1.0.md)', '](https://github.com/Tao-pyth/the-conductor-of-the-guild/blob/v0.2.0/docs/specification_status_v0.1.0.md)') |
-    Set-Content -LiteralPath $packagedTechnicalSpec -Encoding utf8 -NoNewline
+# Keep links to the small set of packaged guides local. References to design
+# catalogues that remain in the repository point to this release's source tag.
+$sourceTag = if ($Version -like '*dev*') { 'main' } else { 'v' + $Version }
+$packagedGuides = @((Get-Item -LiteralPath (Join-Path $packageDirectory 'README.md'))) + @(Get-ChildItem -LiteralPath $packageDocs -File -Filter '*.md')
+foreach ($guide in $packagedGuides) {
+    $sourceDocument = Join-Path $projectRoot ([IO.Path]::GetRelativePath($packageDirectory, $guide.FullName))
+    $guideText = Get-Content -LiteralPath $guide.FullName -Raw
+    $resolvedGuide = [regex]::Replace($guideText, '\]\(([^)\r\n]+)\)', {
+        param($link)
+        $target = $link.Groups[1].Value
+        if ($target -match '^([a-zA-Z][a-zA-Z0-9+.-]*:|#|/)') { return $link.Value }
+        $parts = $target -split '#', 2
+        $packagedTarget = [IO.Path]::GetFullPath((Join-Path $guide.DirectoryName $parts[0]))
+        if (Test-Path -LiteralPath $packagedTarget) { return $link.Value }
+        $sourceTarget = [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $sourceDocument) $parts[0]))
+        if (-not $sourceTarget.StartsWith($projectRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
+            -not (Test-Path -LiteralPath $sourceTarget)) { return $link.Value }
+        $repositoryPath = [IO.Path]::GetRelativePath($projectRoot, $sourceTarget)
+        $urlPath = (($repositoryPath -split '[/\\]' | ForEach-Object { [Uri]::EscapeDataString($_) }) -join '/')
+        $fragment = if ($parts.Count -gt 1) { '#' + $parts[1] } else { '' }
+        return "](https://github.com/Tao-pyth/the-conductor-of-the-guild/blob/$sourceTag/$urlPath$fragment)"
+    })
+    Set-Content -LiteralPath $guide.FullName -Value $resolvedGuide -Encoding utf8 -NoNewline
+}
 Copy-Item -LiteralPath $thirdPartySource -Destination (Join-Path $packageDirectory 'third_party') -Recurse
 Compress-Archive -LiteralPath $packageDirectory -DestinationPath $archivePath -Force
+$archiveHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+($archiveHash + '  ' + [System.IO.Path]::GetFileName($archivePath)) |
+    Set-Content -LiteralPath ($archivePath + '.sha256') -Encoding ascii
 Write-Output ('PACKAGE_DIRECTORY=' + $packageDirectory)
 Write-Output ('PACKAGE_ZIP=' + $archivePath)
+Write-Output ('PACKAGE_SHA256=' + $archiveHash)

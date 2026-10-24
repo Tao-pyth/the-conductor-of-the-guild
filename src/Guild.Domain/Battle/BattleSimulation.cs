@@ -9,7 +9,7 @@ using Guild.Domain.Serialization;
 namespace Guild.Domain.Battle;
 
 /// <summary>Authoritative, single-threaded combat independent of Godot and frame timing.</summary>
-public sealed class BattleSimulation
+public sealed partial class BattleSimulation
 {
     public const int SimulationVersion = 1;
     public const int TickMs = 20;
@@ -28,7 +28,12 @@ public sealed class BattleSimulation
     public BattleSnapshot State { get; }
     public IReadOnlyList<CombatantState> Units => State.Units;
     public IReadOnlyList<ProjectileState> Projectiles => State.Projectiles;
-    public int TotalWaves => stage.Waves.Count;
+    public bool IsInvasion => stage.Mode == "invasion";
+    public int TotalWaves => IsInvasion ? stage.Sections!.Count : stage.Waves.Count;
+    public long RemainingSectionTimeMs => !IsInvasion ? 0
+        : State.WaveCompleted && !State.Victory ? stage.Sections![Math.Min(State.Wave, TotalWaves - 1)].TimeLimitMs
+        : Math.Max(0, stage.Sections![Math.Clamp(State.Wave - 1, 0, TotalWaves - 1)].TimeLimitMs
+            - (State.TimeMs - State.SectionStartTimeMs));
 
     public BattleSimulation(BattleSetup setup)
     {
@@ -47,7 +52,16 @@ public sealed class BattleSimulation
             Setup = frozen, Resources = frozen.InitialResources, DefenseHp = frozen.DefenseHp,
             Rng = random.Capture()
         };
-        foreach (var initial in frozen.Units)
+        if (IsInvasion)
+        {
+            if (frozen.PartyIds is null || frozen.PartyIds.Count is < 1 or > 10
+                || frozen.PartyIds.Distinct(StringComparer.Ordinal).Count() != frozen.PartyIds.Count
+                || frozen.PartyIds.Any(id => !frozen.Units.Any(u => u.Id == id)))
+                throw new ArgumentException("Invasion requires a unique expedition party of 1..10 owned adventurers.");
+            State.RuleSetId = "invasion-v1";
+        }
+        foreach (var initial in IsInvasion ? frozen.Units.OrderBy(u =>
+            frozen.PartyIds!.Contains(u.Id) ? frozen.PartyIds.IndexOf(u.Id) : int.MaxValue) : frozen.Units.AsEnumerable())
         {
             var template = frozen.Content.WeaponTemplates.Single(w => w.Id == initial.WeaponTemplateId);
             var unit = new CombatantState
@@ -78,6 +92,7 @@ public sealed class BattleSimulation
                 });
             }
             State.Units.Add(unit);
+            if (IsInvasion) unit.TargetPreset = "nearest";
         }
     }
 
@@ -88,6 +103,16 @@ public sealed class BattleSimulation
         State = Clone(snapshot);
         State.Setup.Content.EnsureValid();
         stage = State.Setup.Content.Stages.Single(s => s.Id == State.Setup.StageId);
+        if ((IsInvasion && State.RuleSetId != "invasion-v1")
+            || (!IsInvasion && State.RuleSetId is not (null or "defense-v1")))
+            throw new NotSupportedException("未対応の戦闘ルールです。保存データは変更していません。");
+        if (IsInvasion && (State.Setup.PartyIds is null || State.Setup.PartyIds.Count is < 1 or > 10
+            || State.Setup.PartyIds.Distinct(StringComparer.Ordinal).Count() != State.Setup.PartyIds.Count
+            || State.Setup.PartyIds.Any(id => !State.Setup.Units.Any(u => u.Id == id))))
+            throw new InvalidDataException("侵攻編成の保存内容が不正です。");
+        if (IsInvasion && (State.Wave < 0 || State.Wave > TotalWaves || (State.Running && State.Wave == 0)
+            || State.TimeMs < 0 || State.SectionStartTimeMs < 0 || State.SectionStartTimeMs > State.TimeMs))
+            throw new InvalidDataException("侵攻区画または戦闘時刻の保存内容が不正です。");
         remainingPathDistance = BuildRemainingPathDistance(stage);
         skills = State.Setup.Content.Skills.ToDictionary(s => s.Id, StringComparer.Ordinal);
         random = Pcg32.Restore(State.Rng);
@@ -113,6 +138,7 @@ public sealed class BattleSimulation
     public bool Deploy(string id, int x, int y, BigInteger? placementCost = null)
     {
         var unit = Ally(id);
+        if (IsInvasion && State.Setup.PartyIds?.Contains(id) != true) return false;
         if (unit is null || unit.Deployed || unit.Hp <= 0 || State.Running || State.Defeated || State.Victory
             || State.Units.Count(u => !u.IsEnemy && u.Deployed) >= 10 || !CanPlace(x, y, id)) return false;
         // The coefficient is a technical fixture; the production balancing value remains open.
@@ -122,6 +148,7 @@ public sealed class BattleSimulation
         State.Resources -= cost;
         unit.Deployed = unit.EverDeployed = true;
         unit.X = unit.AnchorX = x; unit.Y = unit.AnchorY = y;
+        if (IsInvasion) SetInvasionDeployment(unit, x, y);
         Emit("deploy", id, id, $"{unit.Name}を配置", cost);
         return true;
     }
@@ -131,17 +158,22 @@ public sealed class BattleSimulation
         var unit = Ally(id);
         if (State.Running || State.Defeated || State.Victory || unit is null || !unit.Deployed || !CanPlace(x, y, id)) return false;
         unit.X = unit.AnchorX = x; unit.Y = unit.AnchorY = y;
+        if (IsInvasion) SetInvasionDeployment(unit, x, y);
         unit.CurrentTargetId = null; unit.Action = null;
         Emit("reposition", id, id, $"{unit.Name}の配置位置を変更", 0);
         return true;
     }
 
-    private bool CanPlace(int x, int y, string id) => x >= 0 && x < stage.MapWidth && y >= 0 && y < stage.MapHeight
+    private bool CanPlace(int x, int y, string id) => IsInvasion
+        ? stage.DeploymentCells!.Any(p => p.X == x && p.Y == y)
+            && !State.Units.Any(u => !u.IsEnemy && u.Deployed && u.Id != id && u.DeploymentX == x && u.DeploymentY == y)
+        : x >= 0 && x < stage.MapWidth && y >= 0 && y < stage.MapHeight
         && !stage.Path.Any(p => p.X == x && p.Y == y)
         && !State.Units.Any(u => !u.IsEnemy && u.Deployed && u.Id != id && u.AnchorX == x && u.AnchorY == y);
 
     public bool BeginWave()
     {
+        if (IsInvasion) return BeginInvasionSection();
         if (State.Running || State.Defeated || State.Victory || State.Wave >= TotalWaves
             || !State.Units.Any(u => !u.IsEnemy && u.Deployed)
             || State.Units.Any(u => !u.IsEnemy && u.PendingLevelChoices > 0)) return false;
@@ -157,6 +189,7 @@ public sealed class BattleSimulation
 
     public void Step()
     {
+        if (IsInvasion) { StepInvasion(); return; }
         if (!State.Running) return;
         if (MeasurePhases) phaseStarted = Stopwatch.GetTimestamp();
         State.TimeMs = checked(State.TimeMs + TickMs);
@@ -248,6 +281,7 @@ public sealed class BattleSimulation
 
     private void Move(CombatantState unit)
     {
+        if (IsInvasion) { MoveInvasion(unit); return; }
         if (Stunned(unit) || unit.Action is not null || State.TimeMs < unit.HardLockUntilMs) return;
         Rational slow = 0;
         foreach (var status in unit.Statuses)
@@ -377,6 +411,7 @@ public sealed class BattleSimulation
 
     private CombatantState? SelectTarget(CombatantState source, int? explicitRange = null)
     {
+        if (IsInvasion) return SelectInvasionTarget(source, explicitRange);
         CombatantState? best = null;
         Rational bestDistance = 0, bestArrival = 0;
         var range = source.IsEnemy ? explicitRange ?? source.RangeCenti : Math.Min(400, explicitRange ?? 400);
@@ -452,7 +487,7 @@ public sealed class BattleSimulation
             target = SelectTarget(unit, EffectiveRange(unit));
             unit.CurrentTargetId = target?.Id;
         }
-        if (target is null || (!unit.IsEnemy && !WithinAnchor(unit, target.X, target.Y))) return;
+        if (target is null || !ActionTargetAllowed(unit, target)) return;
         var interval = unit.IsEnemy ? unit.BaseAttackIntervalMs
             : (unit.PreparedAttackIntervalMs ?? (unit.BaseAttackIntervalMs * 100 / (100 + Rational.Max(1, unit.Stats.Agi))))
                 * Rational.Max(new Rational(1, 10), unit.IntervalMultiplier + unit.LevelIntervalMultiplier - 1);
@@ -494,7 +529,7 @@ public sealed class BattleSimulation
             {
                 var lockedTarget = action.TargetIds.Select(Unit).FirstOrDefault(t => t is not null && Active(t));
                 if (lockedTarget is null || !InRange(source, lockedTarget, EffectiveRange(source))
-                    || (!source.IsEnemy && !WithinAnchor(source, lockedTarget.X, lockedTarget.Y)))
+                    || !ActionTargetAllowed(source, lockedTarget))
                 {
                     source.Action = null; source.CurrentTargetId = null; source.HardLockUntilMs = State.TimeMs;
                     continue;
@@ -506,7 +541,7 @@ public sealed class BattleSimulation
             {
                 var target = action.TargetIds.Select(Unit).FirstOrDefault(t => t is not null && Active(t));
                 if (target is null || !InRange(source, target, EffectiveRange(source))
-                    || (!source.IsEnemy && !WithinAnchor(source, target.X, target.Y))) continue;
+                    || !ActionTargetAllowed(source, target)) continue;
                 // Normal projectiles capture offensive values at release, not at
                 // windup start. Their target's defense remains an impact-time value.
                 action.AttackSnapshot = CombatMath.Attack(source);
@@ -633,7 +668,7 @@ public sealed class BattleSimulation
         target.Action = null; target.CurrentTargetId = null;
         if (target.IsEnemy)
         {
-            var reward = target.EnemyLevel * 2;
+            var reward = !IsInvasion || target.Role == "guard" ? target.EnemyLevel * 2 : 0;
             State.Resources += reward;
             Emit("enemy-defeated", sourceId, target.Id, "敵を撃破", reward, castId);
         }
@@ -692,7 +727,7 @@ public sealed class BattleSimulation
     {
         var unit = Ally(id);
         if (State.Running || State.Defeated || State.Victory || unit is null || !unit.Deployed
-            || unit.Level >= 10 || unit.PendingLevelChoices > 0) return false;
+            || unit.Level >= 10 || unit.PendingLevelChoices > 0 || (IsInvasion && unit.Hp <= 0)) return false;
         var missing = BigInteger.Max(0, LevelCost(unit.Level) - unit.LevelExperience);
         var cost = missing * 2;
         if (State.Resources < cost) return false;
@@ -734,6 +769,7 @@ public sealed class BattleSimulation
         Recalculate(unit, false);
         unit.Hp = BigInteger.Max(1, new Rational(unit.MaxHp, 10).Ceiling());
         unit.X = unit.AnchorX; unit.Y = unit.AnchorY;
+        if (IsInvasion) SetInvasionDeployment(unit, unit.DeploymentX, unit.DeploymentY);
         unit.HardLockUntilMs = unit.AttackReadyAtMs = State.TimeMs;
         foreach (var slot in unit.Skills)
         {
@@ -747,7 +783,8 @@ public sealed class BattleSimulation
     public bool SetTarget(string id, string preset)
     {
         var unit = Ally(id);
-        if (unit is null || preset is not ("arrival" or "low-hp" or "high-hp" or "nearest")) return false;
+        if (unit is null || (IsInvasion ? preset is not ("low-hp" or "high-hp" or "nearest" or "structures")
+            : preset is not ("arrival" or "low-hp" or "high-hp" or "nearest"))) return false;
         unit.TargetPreset = preset;
         if (unit.Action is null) unit.CurrentTargetId = null;
         return true;
@@ -799,6 +836,7 @@ public sealed class BattleSimulation
         var target = Unit(targetId);
         kind = NormalizeStatus(kind);
         if (target is null || !Active(target) || durationMs <= 0 || kind is not ("burn" or "poison" or "slow" or "stun" or "defenseup" or "attackup")) return false;
+        if (IsInvasion && IsStructure(target)) return false;
         strength = Rational.Max(0, strength);
         var interval = tickMs > 0 ? tickMs : kind == "burn" ? 1000 : kind == "poison" ? 2000 : 0;
         var existing = target.Statuses.FirstOrDefault(s => s.Kind == kind);

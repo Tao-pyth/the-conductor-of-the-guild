@@ -15,8 +15,9 @@ public sealed class DefinitionTests
         Assert.True(content.TechnicalFixture);
         Assert.Empty(content.Validate());
         Assert.Equal(5, content.WeaponTemplates.Count);
-        Assert.Equal(10, Assert.Single(content.Stages).Waves.Count);
-        Assert.Equal(1000, Assert.Single(content.Stages).InitialResources);
+        var defense = Assert.Single(content.Stages, stage => stage.Id == "tech-first-defense");
+        Assert.Equal(10, defense.Waves.Count);
+        Assert.Equal(1000, defense.InitialResources);
         Assert.Single(content.Recipes);
         Assert.All(content.Skills, s => Assert.StartsWith("tech-", s.Id));
         Assert.Contains(content.WeaponTemplates, w => w.SkillIds.Count(id => id == "tech-slash") == 2);

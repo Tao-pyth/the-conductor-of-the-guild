@@ -1,5 +1,24 @@
 # 実装・検証結果
 
+## v0.3.0 正式公開の検証 — 2026-10-25
+
+ユーザーのコミット・正式公開依頼により、[v0.3.0公開契約](release_contract_v0.3.0.md)で既存のローカル契約を今回の公開操作について更新した。侵攻の機能・初期値・18項目の受入条件は維持する。
+
+正式版の全123テストを再実行し、成功123・失敗0・スキップ0を確認した。Release/ExportReleaseビルドは警告・エラー0。正式候補ZIPはSDK設定なしのWindows実体確認7シナリオに合格した。dev版の合格記録とは別のTRXと実行記録を保存している。
+
+| 確認 | 状態・証拠予定 |
+| --- | --- |
+| 正式Release全123テスト | 成功123・失敗0・スキップ0。`artifacts/release-v0.3.0/test-results/release-validation.trx` |
+| 正式Windows ZIPの展開・侵攻/防衛・保存/再開・旧保存移行 | 候補ZIPの7シナリオでexit=0・ERRORなし。公開コミットから再生成した最終ZIPも同じ確認を必須とする。最新結果は `artifacts/release-v0.3.0/package-validation/verification.json`、候補履歴は同フォルダーの `run-95b71470/` |
+| Commit/Push/Tag/正式latest Release/ZIPとSHA256 | 公開時にmain/タグ/Releaseのコミット・資産・hashを照合し、今回のAct記録へ保存する |
+| 公開後の再ダウンロード・hash・起動/保存確認 | 公開後に実施し、実際の結果を `artifacts/release-v0.3.0/published-validation/verification.json` と今回のAct記録へ保存する |
+
+devから正式番号への変更だけでは保存を再生成しない。形式1→2へのバックアップ移行と旧防衛の互換性を正式ZIPでも確認する。詳細とdev時のINV-AC01〜18の結果は[侵攻検証記録](invasion_verification_v0.3.0.md)を参照する。OS日本語IMEの変換・候補確定は未確認、最大負荷描画60fpsは非保証。
+
+## v0.3.0-dev 侵攻モード — 2026-10-25
+
+ローカル開発版で侵攻3区画と既存防衛を接続した。全123テスト成功、Godot実画面9シナリオ成功、SDK設定なしのWindows配布実体7シナリオ成功。公開済みv0.2.0で生成した進行中防衛と、その公開DLLの10Wave終了状態による互換比較を含む。詳細・AC01〜18の証拠と残項は[侵攻検証記録](invasion_verification_v0.3.0.md)を参照する。このローカル検証完了時点では正式baselineをv0.2.0に維持した。
+
 ## v0.2.0 正式公開版 — 2026-10-24
 
 正式公開依頼に基づき、[公開契約](release_contract_v0.2.0.md)に従って0.2.0へ版を昇格した。保存形式・戦闘処理版と収録範囲は維持している。

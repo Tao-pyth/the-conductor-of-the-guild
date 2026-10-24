@@ -122,6 +122,7 @@ public sealed record ContentBundle
         }
         foreach (var stage in Stages)
         {
+            if (stage.Mode is not (null or "defense" or "invasion")) errors.Add($"{stage.Id}: unknown battle mode.");
             if (stage.Rank < 1 || stage.RewardRank < 1 || stage.InitialResources < 0 || stage.DefenseHp <= 0 || stage.MapWidth < 1 || stage.MapHeight < 1)
                 errors.Add($"{stage.Id}: invalid stage values.");
             if (stage.Path is null || stage.Path.Count < 2 || stage.Path.Any(p => p is null || p.X < 0 || p.X >= stage.MapWidth || p.Y < 0 || p.Y >= stage.MapHeight))
@@ -129,6 +130,11 @@ public sealed record ContentBundle
             else for (var i = 1; i < stage.Path.Count; i++)
                 if (Math.Abs(stage.Path[i].X - stage.Path[i - 1].X) + Math.Abs(stage.Path[i].Y - stage.Path[i - 1].Y) != 1)
                     errors.Add($"{stage.Id}: path must use adjacent orthogonal cells.");
+            if (stage.Mode == "invasion")
+            {
+                ValidateInvasionStage(stage, errors);
+                continue;
+            }
             if (stage.Waves is null || stage.Waves.Count == 0) { errors.Add($"{stage.Id}: missing waves."); continue; }
             for (var i = 0; i < stage.Waves.Count; i++)
             {
@@ -139,6 +145,46 @@ public sealed record ContentBundle
             }
         }
         return errors;
+    }
+
+    private void ValidateInvasionStage(StageDefinition stage, List<string> errors)
+    {
+        bool Inside(GridPoint p) => p.X >= 0 && p.X < stage.MapWidth && p.Y >= 0 && p.Y < stage.MapHeight;
+        if (stage.DeploymentCells is null || stage.DeploymentCells.Count is < 1 or > 10
+            || stage.DeploymentCells.Any(p => p is null || !Inside(p))
+            || stage.DeploymentCells.Distinct().Count() != stage.DeploymentCells.Count)
+            errors.Add($"{stage.Id}: invalid deployment cells.");
+        if (stage.Sections is null || stage.Sections.Count == 0)
+        { errors.Add($"{stage.Id}: missing invasion sections."); return; }
+        var enemyIds = new HashSet<string>(StringComparer.Ordinal);
+        var minimumRange = Math.Max(1, WeaponTemplates.Select(w => w.RangeCenti).DefaultIfEmpty(100).Min());
+        var minimumRangeSquared = new Rational(minimumRange * (long)minimumRange, 10000);
+        for (var i = 0; i < stage.Sections.Count; i++)
+        {
+            var section = stage.Sections[i];
+            if (section is null || section.Number != i + 1 || section.TimeLimitMs <= 0
+                || section.Enemies is null || section.Enemies.Count == 0)
+            { errors.Add($"{stage.Id}: invalid invasion section at index {i}."); continue; }
+            var objectiveRole = i == stage.Sections.Count - 1 ? "core" : "gate";
+            if (section.Enemies.Count(e => e is not null && e.Role is "gate" or "core") != 1
+                || !section.Enemies.Any(e => e is not null && e.Role == objectiveRole))
+                errors.Add($"{stage.Id}: section needs one gate, or one core in its final section.");
+            foreach (var enemy in section.Enemies)
+            {
+                if (enemy is null || string.IsNullOrWhiteSpace(enemy.Id) || !enemyIds.Add(enemy.Id))
+                { errors.Add($"{stage.Id}: missing or duplicate invasion enemy ID."); continue; }
+                if (enemy.Role is not ("guard" or "turret" or "gate" or "core") || !Inside(new(enemy.X, enemy.Y))
+                    || enemy.Hp.Floor() < 1 || enemy.Power < 0 || enemy.Defense < 0 || enemy.Level < 1
+                    || enemy.RangeCenti < 0 || enemy.MoveSpeedCentiPerSecond < 0 || enemy.AttackIntervalMs <= 0
+                    || enemy.ProjectileSpeedCentiPerSecond < 0)
+                    errors.Add($"{enemy.Id}: invalid invasion enemy values.");
+                if (stage.MapWidth < 1 || stage.MapHeight < 1 || stage.Path is null || !stage.Path.Any(p => p is not null && Enumerable.Range(0, stage.MapWidth)
+                    .Any(x => Enumerable.Range(0, stage.MapHeight).Any(y =>
+                        (x - p.X) * (x - p.X) + (y - p.Y) * (y - p.Y) <= 9
+                        && Battle.CombatMath.DistanceSquared(x, y, enemy.X, enemy.Y) <= minimumRangeSquared))))
+                    errors.Add($"{enemy.Id}: unreachable invasion attack target.");
+            }
+        }
     }
 
     private void CheckIds(IEnumerable<string?> ids, string kind, List<string> errors, bool checkFixturePrefix = true)

@@ -26,11 +26,13 @@ public sealed partial class GameController : IDisposable
     private List<HistoryView> history = [];
     private static readonly string[] LevelKinds = ["vitality", "firepower", "rapid", "mobility", "reach", "defense"];
     public string SavePath => store.Path;
+    public string? MigrationBackupPath => store.MigrationBackupPath;
 
     public GameController(string savePath, string contentPath, Action<CommitStage>? saveFault = null)
     {
         content = ContentBundle.Load(contentPath);
         ValidateSupportedContent(content);
+        PreflightExistingSave(savePath);
         store = new SaveStore(savePath, saveFault);
         try
         {
@@ -50,15 +52,30 @@ public sealed partial class GameController : IDisposable
     private void Reload()
     {
         var profileJson = store.ReadDocument("profile");
-        if (profileJson is not null) profile = Deserialize<PlayerProfile>(profileJson);
-        if (profile.FormatVersion != 1) throw new NotSupportedException("未対応のプロフィール形式です。保存を変更せず終了します。");
         var sessionJson = store.ReadDocument("session");
-        session = sessionJson is null or "null" ? null : Deserialize<MatchSession>(sessionJson);
-        if (session is not null && session.FormatVersion != 1) throw new NotSupportedException("未対応のマッチ保存形式です。");
-        if (session is not null && session.Current.Setup.Content.ComputeHash() != session.ContentHash)
-            throw new InvalidDataException("マッチ開始時の定義と保存ハッシュが一致しません。保存データは変更していません。");
-        battle = session is null ? null : BattleSimulation.Restore(session.Phase == "Battle" ? session.WaveStart ?? throw new InvalidDataException("Wave開始点がありません。") : session.Current);
+        (profile, session, battle) = ValidateSavedDocuments(profileJson, sessionJson);
         revision = store.Revision;
+        if (profileJson is not null && (ReadDocumentVersion(profileJson) == 1 || session is { FormatVersion: 1 }))
+        {
+            store.BackupBeforeDocumentMigration();
+            profile.FormatVersion = 2;
+            if (session is not null) session.FormatVersion = 2;
+            var id = "migrate-documents-v2:" + revision;
+            var hash = Hash(profileJson + "\n" + sessionJson);
+            try
+            {
+                var migrated = store.Commit(new(revision, id, hash, "保存形式を2へ移行しました。旧データのバックアップを保存しました。",
+                    new Dictionary<string, string> { ["profile"] = Serialize(profile), ["session"] = Serialize(session) }, []));
+                revision = migrated.Revision;
+            }
+            catch (Exception exception) when (exception is IOException or InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
+            {
+                if (store.FindCommand(id, hash) is null) throw;
+                revision = store.Revision;
+            }
+        }
+        if (session?.Phase == "Battle" && session.WaveStartGrowthRng is { } growthRng)
+            profile.GrowthRng = growthRng;
         history = [];
         long after = 0;
         while (true)
@@ -69,6 +86,91 @@ public sealed partial class GameController : IDisposable
             after = page[^1].Sequence;
         }
         accumulator = 0;
+    }
+
+    private static int ReadDocumentVersion(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != JsonValueKind.Object)
+            throw new InvalidDataException("保存内容の形式が正しくありません。");
+        return document.RootElement.TryGetProperty("formatVersion", out var version) ? version.GetInt32() : 1;
+    }
+
+    private static (PlayerProfile Profile, MatchSession? Session, BattleSimulation? Battle) ValidateSavedDocuments(string? profileJson, string? sessionJson)
+    {
+        if (profileJson is not null && ReadDocumentVersion(profileJson) is not (1 or 2))
+            throw new NotSupportedException("未対応のプロフィール形式です。保存を変更せず終了します。");
+        var loadedProfile = profileJson is null ? new PlayerProfile() : Deserialize<PlayerProfile>(profileJson);
+        if (profileJson is not null) loadedProfile.FormatVersion = ReadDocumentVersion(profileJson);
+        if (profileJson is not null) ValidateProfileOwnership(loadedProfile);
+        if (sessionJson is null or "null") return (loadedProfile, null, null);
+        if (profileJson is null) throw new InvalidDataException("プロフィールのないマッチ保存です。");
+        if (ReadDocumentVersion(sessionJson) is not (1 or 2))
+            throw new NotSupportedException("未対応のマッチ保存形式です。保存を変更せず終了します。");
+        var loadedSession = Deserialize<MatchSession>(sessionJson);
+        loadedSession.FormatVersion = ReadDocumentVersion(sessionJson);
+        if (loadedSession.Current is null || loadedSession.StartingRanks is null || loadedSession.LevelChoices is null)
+            throw new InvalidDataException("マッチ保存に必要な状態がありません。保存データは変更していません。");
+        var ownedIds = loadedProfile.Adventurers.Select(actor => actor.Id).ToHashSet(StringComparer.Ordinal);
+        if (!ownedIds.SetEquals(loadedSession.StartingRanks.Keys) || loadedSession.StartingRanks.Values.Any(rank => rank < 1)
+            || loadedSession.LevelChoices.Keys.Any(id => !ownedIds.Contains(id)))
+            throw new InvalidDataException("マッチの参加者・開始Rank・Lv候補に不整合があります。保存データは変更していません。");
+        if (loadedSession.Phase is not ("Preparation" or "Battle" or "Victory" or "Defeat"))
+            throw new InvalidDataException("不明なマッチ進行状態です。");
+        foreach (var snapshot in new[] { loadedSession.Current, loadedSession.MatchStart, loadedSession.WaveStart }.Where(x => x is not null))
+        {
+            if (snapshot!.Setup is null || snapshot.Setup.Content is null || snapshot.Setup.Units is null || snapshot.Units is null
+                || snapshot.Setup.MatchId != loadedSession.MatchId
+                || !ownedIds.SetEquals(snapshot.Setup.Units.Select(unit => unit.Id))
+                || snapshot.Setup.Units.Select(unit => unit.Id).Distinct(StringComparer.Ordinal).Count() != ownedIds.Count
+                || !ownedIds.SetEquals(snapshot.Units.Where(unit => !unit.IsEnemy).Select(unit => unit.Id))
+                || snapshot.Units.Select(unit => unit.Id).Distinct(StringComparer.Ordinal).Count() != snapshot.Units.Count)
+                throw new InvalidDataException("戦闘保存の冒険者一覧に不整合があります。保存データは変更していません。");
+            if (snapshot!.Setup.Content.ComputeHash() != loadedSession.ContentHash)
+                throw new InvalidDataException("マッチ開始時の定義と保存ハッシュが一致しません。保存データは変更していません。");
+            ValidateSupportedContent(snapshot.Setup.Content);
+            _ = BattleSimulation.Restore(snapshot);
+        }
+        var restored = BattleSimulation.Restore(loadedSession.Phase == "Battle"
+            ? loadedSession.WaveStart ?? throw new InvalidDataException("戦闘開始点がありません。") : loadedSession.Current);
+        return (loadedProfile, loadedSession, restored);
+    }
+
+    private static void ValidateProfileOwnership(PlayerProfile value)
+    {
+        if (value.Adventurers is null || value.Weapons is null || value.PendingEvents is null || value.DiscoveredRecipes is null
+            || value.Adventurers.Count is < 1 or > 50 || value.Capacity < value.Adventurers.Count || value.Capacity > 50
+            || value.Resources < 0 || value.GrowthRng is null || value.GenerationRng is null)
+            throw new InvalidDataException("プロフィールの所有データが不正です。保存データは変更していません。");
+        var actorIds = value.Adventurers.Select(actor => actor.Id).ToHashSet(StringComparer.Ordinal);
+        if (actorIds.Count != value.Adventurers.Count || actorIds.Any(string.IsNullOrWhiteSpace)
+            || value.Weapons.Any(weapon => string.IsNullOrWhiteSpace(weapon.Id) || weapon.SkillIds is null
+                || weapon.OwnerId != "guild" && !actorIds.Contains(weapon.OwnerId))
+            || value.Weapons.Select(weapon => weapon.Id).Distinct(StringComparer.Ordinal).Count() != value.Weapons.Count
+            || value.Adventurers.Any(actor => actor.Stats is null || actor.Growth is null || actor.Rank < 1 || actor.Experience < 0
+                || actor.Hp < 0 || actor.WeaknessStacks < 0 || actor.Blessings is null || actor.NextMatchChanges is null
+                || !value.Weapons.Any(weapon => weapon.Id == actor.WeaponId && weapon.OwnerId == actor.Id))
+            || value.PendingEvents.Any(pending => !actorIds.Contains(pending.ActorId)))
+            throw new InvalidDataException("冒険者と装備・成長の所有関係に不整合があります。保存データは変更していません。");
+    }
+
+    private static void PreflightExistingSave(string path)
+    {
+        if (!File.Exists(path)) return;
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+            { DataSource = Path.GetFullPath(path), Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+        connection.Open();
+        using var version = connection.CreateCommand(); version.CommandText = "PRAGMA user_version;";
+        if (Convert.ToInt32(version.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture) > SaveStore.SchemaVersion)
+            throw new NotSupportedException("未対応のデータベース形式です。保存を変更せず終了します。");
+        using var tables = connection.CreateCommand(); tables.CommandText = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='documents';";
+        if (Convert.ToInt32(tables.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture) == 0) return;
+        string? Read(string key)
+        {
+            using var command = connection.CreateCommand(); command.CommandText = "SELECT value FROM documents WHERE key=$key;";
+            command.Parameters.AddWithValue("$key", key); return command.ExecuteScalar() as string;
+        }
+        _ = ValidateSavedDocuments(Read("profile"), Read("session"));
     }
 
     public CommandResult Execute(GameCommand command)
@@ -158,7 +260,7 @@ public sealed partial class GameController : IDisposable
         return command.Type switch
         {
             "Rename" => Rename(command), "Recruit" => Recruit(), "ExpandRoster" => ExpandRoster(),
-            "StartMatch" => StartMatch(), "Deploy" => Deploy(command, false), "Reposition" => Deploy(command, true),
+            "StartMatch" => StartMatch(command), "Deploy" => Deploy(command, false), "Reposition" => Deploy(command, true),
             "StartWave" => StartWave(), "BuyLevel" => BuyLevel(command), "ChooseLevel" => ChooseLevel(command),
             "Revive" => Revive(command), "SetTarget" => SetTarget(command), "TogglePause" => TogglePause(),
             "SetSpeed" => SetSpeed(command), "Retry" => Retry(), "ReturnToGuild" => ReturnToGuild(),
@@ -200,7 +302,10 @@ public sealed partial class GameController : IDisposable
                 PrepareLevelChoices();
                 session.Current = battle.Capture();
                 var id = session.AttemptId + ":wave:" + battle.State.Wave + ":end";
-                var message = session.Phase == "Defeat" ? "防衛に失敗しました。再挑戦か帰還を選んでください。" : session.Phase == "Victory" ? "全Waveを防衛しました。帰還で報酬を確定します。" : $"Wave {battle.State.Wave} を突破しました。";
+                var message = battle.IsInvasion
+                    ? session.Phase == "Defeat" ? InvasionDefeatDescription(battle.State.DefeatReason) + "再挑戦か帰還を選んでください。"
+                        : session.Phase == "Victory" ? "敵の最終拠点を攻略しました。帰還で報酬を確定します。" : $"区画 {battle.State.Wave} を突破しました。次の区画の準備をしてください。"
+                    : session.Phase == "Defeat" ? "防衛に失敗しました。再挑戦か帰還を選んでください。" : session.Phase == "Victory" ? "全Waveを防衛しました。帰還で報酬を確定します。" : $"Wave {battle.State.Wave} を突破しました。";
                 try { Persist(id, Hash(id), message, [new(id, "player", "0", "WaveEnd", beforeSession, Serialize(session), message)]); status = message; }
                 catch (Exception exception) when (exception is IOException or Microsoft.Data.Sqlite.SqliteException or InvalidOperationException)
                 {
@@ -213,6 +318,7 @@ public sealed partial class GameController : IDisposable
                         profile = Deserialize<PlayerProfile>(beforeProfile);
                         session = Deserialize<MatchSession>(beforeSession);
                         battle = BattleSimulation.Restore(session.WaveStart!);
+                        if (session.WaveStartGrowthRng is { } growthRng) profile.GrowthRng = growthRng;
                         paused = true;
                         status = "保存できなかったためWave開始点に戻して一時停止しました: " + exception.Message;
                     }
@@ -276,10 +382,21 @@ public sealed partial class GameController : IDisposable
         return $"所有枠を{profile.Capacity}名に拡張しました。";
     }
 
-    private string StartMatch()
+    private string StartMatch(GameCommand command)
     {
         RequireGuild();
-        var stage = content.Stages[0];
+        var stage = command.TargetId is null ? content.Stages.FirstOrDefault(s => s.Mode != "invasion")
+            : content.Stages.FirstOrDefault(s => s.Id == command.TargetId);
+        if (stage is null) throw new InvalidOperationException("出撃するステージを選んでください。");
+        List<string>? partyIds = null;
+        if (stage.Mode == "invasion")
+        {
+            partyIds = command.Value?.Split(',').Select(id => id.Trim()).ToList() ?? [];
+            if (partyIds.Count is < 1 or > 10 || partyIds.Any(string.IsNullOrWhiteSpace)
+                || partyIds.Distinct(StringComparer.Ordinal).Count() != partyIds.Count
+                || partyIds.Any(id => profile.Adventurers.All(actor => actor.Id != id)))
+                throw new InvalidOperationException("所有冒険者から重複なく1〜10名を遠征編成に選んでください。");
+        }
         var id = Guid.NewGuid().ToString("N");
         var attemptId = Guid.NewGuid().ToString("N");
         var units = profile.Adventurers.Select(actor =>
@@ -290,7 +407,7 @@ public sealed partial class GameController : IDisposable
                 SkillIds = weapon.SkillIds.ToList(), CurrentHp = actor.Hp };
         }).ToList();
         battle = new BattleSimulation(new() { MatchId = id, AttemptId = attemptId, Seed = 42,
-            Content = content, StageId = stage.Id, InitialResources = stage.InitialResources, DefenseHp = stage.DefenseHp, Units = units });
+            Content = content, StageId = stage.Id, InitialResources = stage.InitialResources, DefenseHp = stage.DefenseHp, Units = units, PartyIds = partyIds });
         foreach (var actor in profile.Adventurers)
         {
             var unit = battle.State.Units.Single(x => x.Id == actor.Id);
@@ -301,13 +418,16 @@ public sealed partial class GameController : IDisposable
         session = new() { MatchId = id, AttemptId = attemptId, ContentHash = content.ComputeHash(), Current = battle.Capture(),
             StartingRanks = profile.Adventurers.ToDictionary(x => x.Id, x => x.Rank) };
         paused = false; speed = 1; accumulator = 0;
-        return "出撃準備です。冒険者を選び、配置マスをクリックしてください。";
+        return battle.IsInvasion ? "侵攻準備です。遠征編成の冒険者を出撃マスへ配置してください。戦闘中の追加出撃・途中撤退はできません。"
+            : "出撃準備です。冒険者を選び、配置マスをクリックしてください。";
     }
 
     private string Deploy(GameCommand command, bool reposition)
     {
         RequirePreparation();
         var actor = Actor(command.ActorId);
+        if (battle!.IsInvasion && !battle.State.Setup.PartyIds!.Contains(actor.Id, StringComparer.Ordinal))
+            throw new InvalidOperationException("遠征編成に入れた冒険者だけを配置できます。");
         var unit = battle!.State.Units.Single(x => x.Id == actor.Id);
         var cost = BigInteger.Min(250, 25 * (1 + actor.Rank / 10));
         if (!unit.Deployed && battle.State.Resources < cost) throw new InvalidOperationException("配置資源が不足しています。");
@@ -321,18 +441,21 @@ public sealed partial class GameController : IDisposable
     {
         RequirePreparation();
         if (session!.LevelChoices.Count != 0) throw new InvalidOperationException("Lv強化を選んでください。");
-        if (!battle!.State.Units.Any(x => !x.IsEnemy && x.Deployed)) throw new InvalidOperationException("1名以上を配置してください。");
-        if (session.MatchStart is null) session.MatchStart = battle.Capture();
+        if (!battle!.State.Units.Any(x => !x.IsEnemy && x.Deployed && (!battle.IsInvasion || x.Hp > 0))) throw new InvalidOperationException("生存している冒険者を1名以上配置してください。");
+        if (session.MatchStart is null) { session.MatchStart = battle.Capture(); session.MatchStartGrowthRng = profile.GrowthRng; }
         if (!battle.BeginWave()) throw new InvalidOperationException("Waveを開始できません。");
         session.Phase = "Battle";
         session.WaveStart = battle.Capture();
+        session.WaveStartGrowthRng = profile.GrowthRng;
         accumulator = 0;
-        return $"Wave {battle.State.Wave} 開始。";
+        return battle.IsInvasion ? $"区画 {battle.State.Wave} 侵攻開始。" : $"Wave {battle.State.Wave} 開始。";
     }
 
     private string BuyLevel(GameCommand command)
     {
         RequirePreparation();
+        if (battle!.IsInvasion && battle.State.Units.FirstOrDefault(x => x.Id == command.ActorId)?.Hp <= 0)
+            throw new InvalidOperationException("戦闘不能者は復帰してから経験値を購入してください。");
         if (!battle!.PurchaseLevel(command.ActorId ?? "")) throw new InvalidOperationException("経験値の一括購入条件を満たしていません。");
         PrepareLevelChoices();
         return "不足経験値を購入しました。Lv強化を選んでください。";
@@ -362,7 +485,13 @@ public sealed partial class GameController : IDisposable
         return "Lv強化を確定しました。このマッチ終了時に消失します。";
     }
 
-    private string Revive(GameCommand command) { RequirePreparation(); if (!battle!.Revive(command.ActorId ?? "")) throw new InvalidOperationException("復帰条件を満たしていません。"); return "冒険者が復帰しました。"; }
+    private string Revive(GameCommand command)
+    {
+        RequirePreparation();
+        if (!battle!.Revive(command.ActorId ?? "")) throw new InvalidOperationException("復帰条件を満たしていません。");
+        if (battle.IsInvasion) session!.LevelChoices.Remove(command.ActorId ?? "");
+        return "冒険者が復帰しました。Lvのみ保持し、Lv経験値・一時強化・未選択候補をリセットしました。";
+    }
     private string SetTarget(GameCommand command) { if (battle is null || !battle.SetTarget(command.ActorId ?? "", command.Value ?? "")) throw new InvalidOperationException("標的設定を変更できません。"); return "標的プリセットを変更しました。"; }
     private string TogglePause() { if (session?.Phase != "Battle") throw new InvalidOperationException("戦闘中だけ一時停止できます。"); paused = !paused; return paused ? "一時停止中です。" : "戦闘を再開しました。"; }
     private string SetSpeed(GameCommand command) { if (command.Value is not ("1" or "2")) throw new InvalidOperationException("速度は1か2を指定してください。"); speed = int.Parse(command.Value); return $"戦闘速度を{speed}倍にしました。"; }
@@ -374,6 +503,8 @@ public sealed partial class GameController : IDisposable
         var attempt = Guid.NewGuid().ToString("N");
         snapshot.Setup = snapshot.Setup with { AttemptId = attempt };
         session.AttemptId = attempt; session.Current = snapshot; session.WaveStart = null; session.Phase = "Preparation"; session.LevelChoices.Clear();
+        session.WaveStartGrowthRng = null;
+        if (session.MatchStartGrowthRng is { } growthRng) profile.GrowthRng = growthRng;
         battle = BattleSimulation.Restore(snapshot); paused = false; accumulator = 0;
         return "同じ開始構成で新しい試行を準備しました。";
     }
@@ -385,5 +516,6 @@ public sealed partial class GameController : IDisposable
     private static T Deserialize<T>(string value) => JsonSerializer.Deserialize<T>(value, DomainJson.Options) ?? throw new InvalidDataException("保存内容が空です。");
     private static T Clone<T>(T value) => Deserialize<T>(Serialize(value));
     private static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+    private static string InvasionDefeatDescription(string? reason) => reason == "time-limit" ? "区画の制限時間を超えました。" : "出撃部隊が全滅しました。";
     public void Dispose() => store.Dispose();
 }

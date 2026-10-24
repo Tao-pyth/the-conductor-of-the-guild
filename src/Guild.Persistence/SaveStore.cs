@@ -58,6 +58,21 @@ public sealed class SaveStore : IDisposable
 
     public long Revision { get { lock (gate) return long.Parse((string)Scalar("SELECT value FROM metadata WHERE key='revision';")!, CultureInfo.InvariantCulture); } }
 
+    /// <summary>Protect logical JSON document migrations even when SQLite's table schema is unchanged.</summary>
+    public string BackupBeforeDocumentMigration()
+    {
+        lock (gate)
+        {
+            var backup = Path + ".before-documents-v2-" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture)
+                + "-" + Guid.NewGuid().ToString("N") + ".backup";
+            using var destination = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = backup, Pooling = false }.ToString());
+            destination.Open();
+            connection.BackupDatabase(destination);
+            MigrationBackupPath = backup;
+            return backup;
+        }
+    }
+
     public string? ReadDocument(string key)
     {
         lock (gate)

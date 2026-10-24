@@ -1,0 +1,332 @@
+{
+  "formatVersion": 1,
+  "resources": "0",
+  "capacity": 10,
+  "expansionCount": 0,
+  "rerollTickets": 0,
+  "purificationDrops": 0,
+  "firstClear": false,
+  "nextEventSequence": 1,
+  "growthRng": {
+    "state": 1284799160513564370,
+    "increment": 143
+  },
+  "generationRng": {
+    "state": 4202350249659984070,
+    "increment": 187
+  },
+  "adventurers": [
+    {
+      "id": "0ac262c37bdc4f2ba4e3c4c98916a80c",
+      "name": "\u30A2\u30AA\u30A4",
+      "rank": "1",
+      "experience": "0",
+      "stats": {
+        "str": "10",
+        "vit": "10",
+        "dex": "9",
+        "agi": "10",
+        "int": "11"
+      },
+      "growth": {
+        "str": "0",
+        "vit": "0",
+        "dex": "0",
+        "agi": "0",
+        "int": "0"
+      },
+      "hp": "200",
+      "weaknessStacks": 0,
+      "weaponId": "d87c58f42d26403cae55d8711602144c",
+      "discardBonus": 0,
+      "blessings": [],
+      "nextMatchChanges": {}
+    },
+    {
+      "id": "1a2aa1ecdb094c609d31564137dcd237",
+      "name": "\u30EC\u30F3",
+      "rank": "1",
+      "experience": "0",
+      "stats": {
+        "str": "10",
+        "vit": "10",
+        "dex": "11",
+        "agi": "10",
+        "int": "10"
+      },
+      "growth": {
+        "str": "0",
+        "vit": "0",
+        "dex": "0",
+        "agi": "0",
+        "int": "0"
+      },
+      "hp": "200",
+      "weaknessStacks": 0,
+      "weaponId": "f2a80d00e69549c7b0c00ac1edccdf00",
+      "discardBonus": 0,
+      "blessings": [],
+      "nextMatchChanges": {}
+    },
+    {
+      "id": "661797d16f0d411bb649261c7335a9e9",
+      "name": "\u30DF\u30CA",
+      "rank": "1",
+      "experience": "0",
+      "stats": {
+        "str": "9",
+        "vit": "10",
+        "dex": "10",
+        "agi": "9",
+        "int": "10"
+      },
+      "growth": {
+        "str": "0",
+        "vit": "0",
+        "dex": "0",
+        "agi": "0",
+        "int": "0"
+      },
+      "hp": "200",
+      "weaknessStacks": 0,
+      "weaponId": "1c6028f4e89942738b39bd99198b72af",
+      "discardBonus": 0,
+      "blessings": [],
+      "nextMatchChanges": {}
+    },
+    {
+      "id": "f0feb05222064541bc98a1135f196441",
+      "name": "\u30AB\u30A4",
+      "rank": "1",
+      "experience": "0",
+      "stats": {
+        "str": "10",
+        "vit": "9",
+        "dex": "10",
+        "agi": "11",
+        "int": "9"
+      },
+      "growth": {
+        "str": "0",
+        "vit": "0",
+        "dex": "0",
+        "agi": "0",
+        "int": "0"
+      },
+      "hp": "190",
+      "weaknessStacks": 0,
+      "weaponId": "4c6e0c9fa723401eaa5a12f147665f26",
+      "discardBonus": 0,
+      "blessings": [],
+      "nextMatchChanges": {}
+    },
+    {
+      "id": "5c9307f1d32b490b9c51dcb074be876b",
+      "name": "\u30E6\u30A4",
+      "rank": "1",
+      "experience": "0",
+      "stats": {
+        "str": "10",
+        "vit": "9",
+        "dex": "10",
+        "agi": "10",
+        "int": "11"
+      },
+      "growth": {
+        "str": "0",
+        "vit": "0",
+        "dex": "0",
+        "agi": "0",
+        "int": "0"
+      },
+      "hp": "190",
+      "weaknessStacks": 0,
+      "weaponId": "ddaf245e858a4e90a0ed33ddc83c71cd",
+      "discardBonus": 0,
+      "blessings": [],
+      "nextMatchChanges": {}
+    },
+    {
+      "id": "737ebcc2931c416aab5c8793ed1eed55",
+      "name": "\u30CF\u30EB",
+      "rank": "1",
+      "experience": "0",
+      "stats": {
+        "str": "10",
+        "vit": "10",
+        "dex": "10",
+        "agi": "10",
+        "int": "10"
+      },
+      "growth": {
+        "str": "0",
+        "vit": "0",
+        "dex": "0",
+        "agi": "0",
+        "int": "0"
+      },
+      "hp": "200",
+      "weaknessStacks": 0,
+      "weaponId": "49122e73602e45cc8e37ecc464ae4b5c",
+      "discardBonus": 0,
+      "blessings": [],
+      "nextMatchChanges": {}
+    }
+  ],
+  "weapons": [
+    {
+      "id": "d87c58f42d26403cae55d8711602144c",
+      "templateId": "tech-sword",
+      "name": "\u691C\u8A3C\u7528\u306E\u5263",
+      "ownerId": "0ac262c37bdc4f2ba4e3c4c98916a80c",
+      "basePower": {
+        "numerator": "6111",
+        "denominator": "500"
+      },
+      "attackIntervalMs": {
+        "numerator": "950",
+        "denominator": "1"
+      },
+      "rangeCenti": 150,
+      "skillIds": [
+        "tech-slash",
+        "tech-ultimate"
+      ],
+      "seed": 7884549546039011746,
+      "generatorVersion": "tech-generator-v1",
+      "definitionVersion": "tech-fixture-1"
+    },
+    {
+      "id": "f2a80d00e69549c7b0c00ac1edccdf00",
+      "templateId": "tech-spear",
+      "name": "\u691C\u8A3C\u7528\u306E\u69CD",
+      "ownerId": "1a2aa1ecdb094c609d31564137dcd237",
+      "basePower": {
+        "numerator": "1836",
+        "denominator": "125"
+      },
+      "attackIntervalMs": {
+        "numerator": "1152",
+        "denominator": "1"
+      },
+      "rangeCenti": 220,
+      "skillIds": [
+        "tech-slow"
+      ],
+      "seed": 7042732240570435006,
+      "generatorVersion": "tech-generator-v1",
+      "definitionVersion": "tech-fixture-1"
+    },
+    {
+      "id": "1c6028f4e89942738b39bd99198b72af",
+      "templateId": "tech-hammer",
+      "name": "\u691C\u8A3C\u7528\u306E\u69CC",
+      "ownerId": "661797d16f0d411bb649261c7335a9e9",
+      "basePower": {
+        "numerator": "2496",
+        "denominator": "125"
+      },
+      "attackIntervalMs": {
+        "numerator": "1440",
+        "denominator": "1"
+      },
+      "rangeCenti": 150,
+      "skillIds": [
+        "tech-slash",
+        "tech-slash"
+      ],
+      "seed": 2730727671288659106,
+      "generatorVersion": "tech-generator-v1",
+      "definitionVersion": "tech-fixture-1"
+    },
+    {
+      "id": "4c6e0c9fa723401eaa5a12f147665f26",
+      "templateId": "tech-bow",
+      "name": "\u691C\u8A3C\u7528\u306E\u5F13",
+      "ownerId": "f0feb05222064541bc98a1135f196441",
+      "basePower": {
+        "numerator": "1692",
+        "denominator": "125"
+      },
+      "attackIntervalMs": {
+        "numerator": "1155",
+        "denominator": "1"
+      },
+      "rangeCenti": 500,
+      "skillIds": [
+        "tech-burn-shot"
+      ],
+      "seed": 4384851404746309342,
+      "generatorVersion": "tech-generator-v1",
+      "definitionVersion": "tech-fixture-1"
+    },
+    {
+      "id": "ddaf245e858a4e90a0ed33ddc83c71cd",
+      "templateId": "tech-staff",
+      "name": "\u691C\u8A3C\u7528\u306E\u6756",
+      "ownerId": "5c9307f1d32b490b9c51dcb074be876b",
+      "basePower": {
+        "numerator": "294",
+        "denominator": "25"
+      },
+      "attackIntervalMs": {
+        "numerator": "1200",
+        "denominator": "1"
+      },
+      "rangeCenti": 450,
+      "skillIds": [
+        "tech-mend",
+        "tech-slow"
+      ],
+      "seed": 8998910604113774020,
+      "generatorVersion": "tech-generator-v1",
+      "definitionVersion": "tech-fixture-1"
+    },
+    {
+      "id": "49122e73602e45cc8e37ecc464ae4b5c",
+      "templateId": "tech-sword",
+      "name": "\u691C\u8A3C\u7528\u306E\u5263",
+      "ownerId": "737ebcc2931c416aab5c8793ed1eed55",
+      "basePower": {
+        "numerator": "1656",
+        "denominator": "125"
+      },
+      "attackIntervalMs": {
+        "numerator": "1010",
+        "denominator": "1"
+      },
+      "rangeCenti": 150,
+      "skillIds": [
+        "tech-slash",
+        "tech-slash"
+      ],
+      "seed": 11017465263024789704,
+      "generatorVersion": "tech-generator-v1",
+      "definitionVersion": "tech-fixture-1"
+    },
+    {
+      "id": "97ecaf80131944648de560d941cd9322",
+      "templateId": "tech-bow",
+      "name": "\u691C\u8A3C\u7528\u306E\u5F13",
+      "ownerId": "guild",
+      "basePower": {
+        "numerator": "1744",
+        "denominator": "125"
+      },
+      "attackIntervalMs": {
+        "numerator": "1122",
+        "denominator": "1"
+      },
+      "rangeCenti": 500,
+      "skillIds": [
+        "tech-burn-shot",
+        "tech-slow"
+      ],
+      "seed": 4118316294879683414,
+      "generatorVersion": "tech-generator-v1",
+      "definitionVersion": "tech-fixture-1"
+    }
+  ],
+  "pendingEvents": [],
+  "discoveredRecipes": []
+}

@@ -1,3 +1,5 @@
+using Guild.Domain.Definitions;
+
 namespace Guild.Application;
 
 public sealed record GameCommand(string Type, string? ActorId = null, string? TargetId = null,
@@ -5,15 +7,43 @@ public sealed record GameCommand(string Type, string? ActorId = null, string? Ta
 public sealed record CommandResult(bool Success, string Message);
 public sealed record AdventurerView(string Id, string Name, string Rank, int Level, string Hp,
     string MaxHp, string Weapon, bool Deployed, bool Incapacitated, int X, int Y,
-    IReadOnlyList<string> Blessings, IReadOnlyList<SkillView> Skills, string TargetPreset = "arrival");
+    IReadOnlyList<string> Blessings, IReadOnlyList<SkillView> Skills, string TargetPreset = "arrival")
+{
+    public bool InParty { get; init; } = true;
+    public string Activity { get; init; } = "待機中";
+    public string DeploymentCost { get; init; } = "0";
+    public string PlacementCost => DeploymentCost;
+    public string RevivalCost { get; init; } = "0";
+    public string LevelPurchaseCost { get; init; } = "0";
+}
 public sealed record SkillView(string Slot, string Name, double Progress);
 public sealed record MapEntityView(string Id, string Kind, double X, double Y, double HpRatio);
 public sealed record ChoiceView(string Id, string Name, string Description);
 public sealed record ItemView(string Id, string Name, string OwnerId, bool Equipped);
 public sealed record HistoryView(long Sequence, string Text);
+public sealed record StageView(string Id, string Name, string Mode, int TotalSections, string RewardRank,
+    long TimeLimitMs, string RewardSummary)
+{
+    public int Sections => TotalSections;
+    public string Rank { get; init; } = "1";
+}
 public sealed record GameView(string Screen, string Status, string GuildResources, string MatchResources,
     int Wave, int TotalWaves, int DefenseHp, int Speed, bool Paused, int OwnedCapacity,
     int PendingEvents, string? EventActorId, string? EventKind,
     IReadOnlyList<AdventurerView> Adventurers, IReadOnlyList<MapEntityView> Entities,
     IReadOnlyList<ChoiceView> Choices, IReadOnlyList<ItemView> Items,
-    IReadOnlyList<HistoryView> History, int MapWidth = 16, int MapHeight = 10);
+    IReadOnlyList<HistoryView> History, int MapWidth = 16, int MapHeight = 10)
+{
+    public string Mode { get; init; } = "defense";
+    public string StageId { get; init; } = "";
+    public string StageName { get; init; } = "";
+    public IReadOnlyList<StageView> Stages { get; init; } = [];
+    public IReadOnlyList<string> PartyIds { get; init; } = [];
+    public long RemainingTimeMs { get; init; }
+    public IReadOnlyList<GridPoint> Path { get; init; } = [];
+    public IReadOnlyList<GridPoint> DeploymentCells { get; init; } = [];
+    public string DefeatReason { get; init; } = "";
+    public int RemainingEnemies { get; init; }
+    public string ObjectiveHp { get; init; } = "0";
+    public string ObjectiveMaxHp { get; init; } = "0";
+}

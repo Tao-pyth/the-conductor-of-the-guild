@@ -12,4 +12,5 @@
     <ProjectReference Include="../../src/Guild.Application/Guild.Application.csproj" />
   </ItemGroup>
   <ItemGroup><None Include="../../data/tech-content.json" Link="tech-content.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><None Update="Fixtures/**/*.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>

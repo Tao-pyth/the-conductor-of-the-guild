@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json.Serialization;
 using Guild.Domain.Numerics;
 
 namespace Guild.Domain.Definitions;
@@ -110,4 +111,36 @@ public sealed record StageDefinition
     public int MapHeight { get; init; } = 10;
     public IReadOnlyList<GridPoint> Path { get; init; } = [];
     public IReadOnlyList<WaveDefinition> Waves { get; init; } = [];
+    // Absent fields keep legacy normalized content hashes byte-for-byte stable.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Mode { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<SectionDefinition>? Sections { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<GridPoint>? DeploymentCells { get; init; }
+}
+
+public sealed record SectionDefinition
+{
+    public int Number { get; init; }
+    public string Name { get; init; } = "";
+    public int TimeLimitMs { get; init; } = 300000;
+    public IReadOnlyList<EnemyPlacementDefinition> Enemies { get; init; } = [];
+}
+
+public sealed record EnemyPlacementDefinition
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string Role { get; init; } = "guard";
+    public int X { get; init; }
+    public int Y { get; init; }
+    public int Level { get; init; } = 1;
+    public Rational Hp { get; init; }
+    public Rational Power { get; init; }
+    public Rational Defense { get; init; }
+    public int RangeCenti { get; init; } = 150;
+    public int MoveSpeedCentiPerSecond { get; init; } = 200;
+    public int AttackIntervalMs { get; init; } = 1000;
+    public int ProjectileSpeedCentiPerSecond { get; init; }
 }

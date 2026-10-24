@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../src/Guild.Application/Guild.Application.csproj" />

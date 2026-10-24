@@ -7,7 +7,7 @@ namespace Guild.Application;
 
 public sealed class PlayerProfile
 {
-    public int FormatVersion { get; set; } = 1;
+    public int FormatVersion { get; set; } = 2;
     public BigInteger Resources { get; set; }
     public int Capacity { get; set; } = 10;
     public int ExpansionCount { get; set; }
@@ -78,7 +78,7 @@ public sealed class RankEventState
 
 public sealed class MatchSession
 {
-    public int FormatVersion { get; set; } = 1;
+    public int FormatVersion { get; set; } = 2;
     public string MatchId { get; set; } = "";
     public string AttemptId { get; set; } = "";
     public string Phase { get; set; } = "Preparation";
@@ -86,6 +86,8 @@ public sealed class MatchSession
     public BattleSnapshot Current { get; set; } = new();
     public BattleSnapshot? MatchStart { get; set; }
     public BattleSnapshot? WaveStart { get; set; }
+    public PcgState? MatchStartGrowthRng { get; set; }
+    public PcgState? WaveStartGrowthRng { get; set; }
     public Dictionary<string, List<string>> LevelChoices { get; set; } = [];
     public Dictionary<string, BigInteger> StartingRanks { get; set; } = [];
 }

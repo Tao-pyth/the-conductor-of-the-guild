@@ -907,6 +907,533 @@
           "attacksAdventurers": false
         }
       ]
+    },
+    {
+      "id": "tech-first-invasion",
+      "name": "技術検証・前哨砦攻略",
+      "rank": "1",
+      "rewardRank": "1",
+      "initialResources": "1000",
+      "defenseHp": 20,
+      "mapWidth": 16,
+      "mapHeight": 10,
+      "path": [
+        {
+          "x": 0,
+          "y": 5
+        },
+        {
+          "x": 1,
+          "y": 5
+        },
+        {
+          "x": 2,
+          "y": 5
+        },
+        {
+          "x": 3,
+          "y": 5
+        },
+        {
+          "x": 4,
+          "y": 5
+        },
+        {
+          "x": 5,
+          "y": 5
+        },
+        {
+          "x": 6,
+          "y": 5
+        },
+        {
+          "x": 7,
+          "y": 5
+        },
+        {
+          "x": 8,
+          "y": 5
+        },
+        {
+          "x": 9,
+          "y": 5
+        },
+        {
+          "x": 10,
+          "y": 5
+        },
+        {
+          "x": 11,
+          "y": 5
+        },
+        {
+          "x": 12,
+          "y": 5
+        },
+        {
+          "x": 13,
+          "y": 5
+        },
+        {
+          "x": 14,
+          "y": 5
+        },
+        {
+          "x": 15,
+          "y": 5
+        }
+      ],
+      "waves": [],
+      "mode": "invasion",
+      "sections": [
+        {
+          "number": 1,
+          "name": "外郭",
+          "timeLimitMs": 300000,
+          "enemies": [
+            {
+              "id": "tech-invasion-s1-guard-1",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 7,
+              "y": 4,
+              "level": 1,
+              "hp": {
+                "numerator": "160",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "8",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "5",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s1-guard-2",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 8,
+              "y": 6,
+              "level": 1,
+              "hp": {
+                "numerator": "160",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "8",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "5",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s1-turret-1",
+              "name": "固定砲台",
+              "role": "turret",
+              "x": 11,
+              "y": 3,
+              "level": 1,
+              "hp": {
+                "numerator": "90",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "8",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "5",
+                "denominator": "1"
+              },
+              "rangeCenti": 400,
+              "moveSpeedCentiPerSecond": 0,
+              "attackIntervalMs": 1500,
+              "projectileSpeedCentiPerSecond": 600
+            },
+            {
+              "id": "tech-invasion-s1-gate-1",
+              "name": "外郭門",
+              "role": "gate",
+              "x": 14,
+              "y": 5,
+              "level": 1,
+              "hp": {
+                "numerator": "300",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "0",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "10",
+                "denominator": "1"
+              },
+              "rangeCenti": 0,
+              "moveSpeedCentiPerSecond": 0,
+              "attackIntervalMs": 1500,
+              "projectileSpeedCentiPerSecond": 0
+            }
+          ]
+        },
+        {
+          "number": 2,
+          "name": "内郭",
+          "timeLimitMs": 300000,
+          "enemies": [
+            {
+              "id": "tech-invasion-s2-guard-1",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 6,
+              "y": 4,
+              "level": 2,
+              "hp": {
+                "numerator": "220",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "11",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "8",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s2-guard-2",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 8,
+              "y": 6,
+              "level": 2,
+              "hp": {
+                "numerator": "220",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "11",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "8",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s2-guard-3",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 10,
+              "y": 5,
+              "level": 2,
+              "hp": {
+                "numerator": "220",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "11",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "8",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s2-turret-1",
+              "name": "固定砲台",
+              "role": "turret",
+              "x": 11,
+              "y": 7,
+              "level": 2,
+              "hp": {
+                "numerator": "120",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "11",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "8",
+                "denominator": "1"
+              },
+              "rangeCenti": 400,
+              "moveSpeedCentiPerSecond": 0,
+              "attackIntervalMs": 1500,
+              "projectileSpeedCentiPerSecond": 600
+            },
+            {
+              "id": "tech-invasion-s2-gate-1",
+              "name": "内郭門",
+              "role": "gate",
+              "x": 14,
+              "y": 5,
+              "level": 2,
+              "hp": {
+                "numerator": "450",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "0",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "15",
+                "denominator": "1"
+              },
+              "rangeCenti": 0,
+              "moveSpeedCentiPerSecond": 0,
+              "attackIntervalMs": 1500,
+              "projectileSpeedCentiPerSecond": 0
+            }
+          ]
+        },
+        {
+          "number": 3,
+          "name": "中枢",
+          "timeLimitMs": 300000,
+          "enemies": [
+            {
+              "id": "tech-invasion-s3-guard-1",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 6,
+              "y": 4,
+              "level": 3,
+              "hp": {
+                "numerator": "300",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "14",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "12",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s3-guard-2",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 7,
+              "y": 6,
+              "level": 3,
+              "hp": {
+                "numerator": "300",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "14",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "12",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s3-guard-3",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 9,
+              "y": 4,
+              "level": 3,
+              "hp": {
+                "numerator": "300",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "14",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "12",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s3-guard-4",
+              "name": "守備兵",
+              "role": "guard",
+              "x": 10,
+              "y": 6,
+              "level": 3,
+              "hp": {
+                "numerator": "300",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "14",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "12",
+                "denominator": "1"
+              },
+              "rangeCenti": 150,
+              "moveSpeedCentiPerSecond": 200,
+              "attackIntervalMs": 1000,
+              "projectileSpeedCentiPerSecond": 0
+            },
+            {
+              "id": "tech-invasion-s3-turret-1",
+              "name": "固定砲台",
+              "role": "turret",
+              "x": 11,
+              "y": 3,
+              "level": 3,
+              "hp": {
+                "numerator": "150",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "14",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "12",
+                "denominator": "1"
+              },
+              "rangeCenti": 400,
+              "moveSpeedCentiPerSecond": 0,
+              "attackIntervalMs": 1500,
+              "projectileSpeedCentiPerSecond": 600
+            },
+            {
+              "id": "tech-invasion-s3-turret-2",
+              "name": "固定砲台",
+              "role": "turret",
+              "x": 11,
+              "y": 7,
+              "level": 3,
+              "hp": {
+                "numerator": "150",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "14",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "12",
+                "denominator": "1"
+              },
+              "rangeCenti": 400,
+              "moveSpeedCentiPerSecond": 0,
+              "attackIntervalMs": 1500,
+              "projectileSpeedCentiPerSecond": 600
+            },
+            {
+              "id": "tech-invasion-s3-core-1",
+              "name": "司令核",
+              "role": "core",
+              "x": 14,
+              "y": 5,
+              "level": 3,
+              "hp": {
+                "numerator": "650",
+                "denominator": "1"
+              },
+              "power": {
+                "numerator": "0",
+                "denominator": "1"
+              },
+              "defense": {
+                "numerator": "20",
+                "denominator": "1"
+              },
+              "rangeCenti": 0,
+              "moveSpeedCentiPerSecond": 0,
+              "attackIntervalMs": 1500,
+              "projectileSpeedCentiPerSecond": 0
+            }
+          ]
+        }
+      ],
+      "deploymentCells": [
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 4
+        },
+        {
+          "x": 1,
+          "y": 5
+        },
+        {
+          "x": 1,
+          "y": 6
+        },
+        {
+          "x": 1,
+          "y": 7
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        },
+        {
+          "x": 2,
+          "y": 5
+        },
+        {
+          "x": 2,
+          "y": 6
+        },
+        {
+          "x": 2,
+          "y": 7
+        }
+      ]
     }
   ]
 }

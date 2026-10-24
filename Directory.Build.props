@@ -5,7 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Deterministic>true</Deterministic>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <Version>0.2.0</Version>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <Version>0.3.0</Version>
     <Optimize Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'ExportRelease'">true</Optimize>
   </PropertyGroup>
 </Project>

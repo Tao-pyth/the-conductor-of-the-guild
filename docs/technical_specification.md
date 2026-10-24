@@ -1,12 +1,28 @@
-# 実装技術仕様 v0.2.0
+# 実装技術仕様 — v0.3.0
 
-v0.2.0は、Windows向けの正式な技術検証リリース。実装した技術検証サイクルと収録データを公開範囲とする。
+## v0.3.0：侵攻モードと旧保存の移行
+
+v0.3.0は、[侵攻仕様](invasion_mode_spec_v0.3.0_draft.md)のINV-01〜06を実装した技術検証版を、ユーザーのコミット・正式公開依頼に従って公開する版。機能追加は行わず、版情報・文書・配布資産を0.3.0にそろえる。公開操作と証拠の条件は[v0.3.0公開契約](release_contract_v0.3.0.md)、dev時と正式版それぞれの検証状況は[侵攻検証記録](invasion_verification_v0.3.0.md)に分ける。
+
+- Stageのmodeは旧データで未指定なら防衛。侵攻ではSections/DeploymentCellsを持ち、陣営とguard/turret/gate/core等の役割を分ける。追加のStageプロパティはnull時に出力せず、旧固定定義の正規化hashを保つ。
+- BattleSimulationは既存の防衛処理と侵攻処理を分岐する。区画では各自の経路進軍、到達可能な攻撃地点、守備隊/構造物の動作、全滅→全撃破→時間切れの順序を扱う。
+- 通算戦闘時刻を区画間で保持する。区画開始時刻との差を制限時間へ使い、通常突破でCD・異常の残時間を変えない。準備中は時計を進めない。
+- プロフィール/マッチの文書形式を2にする。旧形式1のプロフィールとマッチを検証してからSQLite Backupで保護し、文書を単一TXで移行する。SQLiteのテーブル形式は1を維持し、旧防衛の戦闘処理版と生成済み武器・履歴を保持する。
+- 戦闘中断は同試行の区画開始checkpoint、敗北再挑戦は新試行のマッチ開始checkpointへ戻す。戦闘乱数とLv候補抽選乱数を両方復元し、既に確定した準備操作や報酬を二重適用しない。
+- 初回クリア報酬はモード通算1回。侵攻の各区画と帰還の報酬を分離し、参加者・非出撃者・戦闘不能者を保存状態から判定する。
+- 公開済みv0.2.0のEXEで作った旧保存と、その公開DLLで10Waveを実行したgolden stateを互換テストに含める。新版の期待値だけで旧互換を判定しない。
+
+以下はv0.2.0から継承した共通基盤。新規の侵攻・文書移行に関する事項は上記と侵攻仕様を優先する。以前のローカル実装・公開契約は履歴として保持する。
+
+Windows x64向けの技術検証サイクルと収録データを公開範囲とする。候補台帳全件や未確定の製品要件を実装済みとは扱わない。
 
 ## 採用構成と境界
 
 Godot 4.7.2 .NET版 / Compatibility、C# / .NET 10、Microsoft.Data.Sqlite 10.0.13、JSON、xUnit。SDKとNuGetの版を固定し、画面・操作受付・ゲームルール・保存を分離する。
 
-実装と検証の範囲は [implementation_contract.md](implementation_contract.md)、今回の正式公開条件は [release_contract_v0.2.0.md](release_contract_v0.2.0.md) に記録する。製品要求の入口は [specification_status_v0.1.0.md](specification_status_v0.1.0.md) とし、今回採用した武器更新・表示丸め以外の未確定仕様を確定済みにしない。
+Windows配布の再現性を保つため、共通ビルド設定のRuntimeIdentifiersをwin-x64へ固定し、テスト/ゲームの依存復元を`--locked-mode`で確認する。Windows書出しがlockのRID構成を増減させないようにし、依存パッケージの版は変更しない。
+
+共通基盤の初回実装範囲は [implementation_contract.md](implementation_contract.md)、v0.2.0公開時の条件は [release_contract_v0.2.0.md](release_contract_v0.2.0.md) に記録している。今回の条件は [release_contract_v0.3.0.md](release_contract_v0.3.0.md) を使用する。製品要求の入口は [specification_status_v0.1.0.md](specification_status_v0.1.0.md) とし、既存の未確定仕様や候補数値を一括で確定済みにしない。
 
 ## 数値と乱数
 
@@ -45,10 +61,10 @@ SQLiteは単一書込窓口、WAL、synchronous=FULL。保存形式の将来版�
 
 `data/tech-content.json` を正本とし、ビルドで `game/content` へコピーする。Godot出力はこのJSONをPCKへ含める。アプリはGodot FileAccessで読み、実行用キャッシュを展開して純C#へ渡す。
 
-tech-*の1ステージ10Wave、5武器、5技能、3加護、1レシピを収録。武器予算100、通常性能最低40、生成最大20試行、技能数分布10/25/30/5/15/15%。個別数値と初期報酬1000等は技術検証値として扱う。Excel・既存候補台帳は直接実行せず維持する。
+tech-*の防衛1ステージ10Waveと侵攻1ステージ3区画、5武器、5技能、3加護、1レシピを収録。武器予算100、通常性能最低40、生成最大20試行、技能数分布10/25/30/5/15/15%。個別数値・300秒制限・各報酬は技術検証値として扱う。Excel・既存候補台帳は直接実行せず維持する。
 
 ## 公開と検証の境界
 
-Gitタグ `v0.2.0` に対応するWindows x64 ZIPを [GitHub Release](https://github.com/Tao-pyth/the-conductor-of-the-guild/releases/tag/v0.2.0) で公開する。保存形式と戦闘処理の版は公開番号から独立しており、今回の公開番号への昇格だけで保存データを再生成しない。
+Gitタグ `v0.3.0` に対応するWindows x64 ZIPとSHA256を [GitHub Release](https://github.com/Tao-pyth/the-conductor-of-the-guild/releases/tag/v0.3.0) で公開する。保存形式と戦闘処理の版は公開番号から独立しており、0.3.0-devから正式番号への昇格だけで保存を再生成したり再移行したりしない。形式1→2の移行と旧防衛の互換性は、前述の専用処理とテストで保護する。
 
 OS日本語IMEの変換・候補確定は未確認。性能測定値は条件付きの実測であり、最大負荷を描画する場合の60fpsや、すべてのPCの性能を保証しない。実行コマンドと確認範囲は [検証結果](verification.md) を参照する。

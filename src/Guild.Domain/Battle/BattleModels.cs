@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json.Serialization;
 using Guild.Domain.Definitions;
 using Guild.Domain.Numerics;
 using Guild.Domain.Randomness;
@@ -33,6 +34,8 @@ public sealed record BattleSetup
     public int DefenseHp { get; init; } = 20;
     public BigInteger InitialResources { get; init; } = 1000;
     public string StageId { get; init; } = "tech-first-defense";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? PartyIds { get; init; }
 }
 
 public sealed class BattleSnapshot
@@ -58,6 +61,9 @@ public sealed class BattleSnapshot
     public List<CombatantState> Units { get; set; } = [];
     public List<ProjectileState> Projectiles { get; set; } = [];
     public HashSet<string> RefundGuards { get; set; } = [];
+    public string? RuleSetId { get; set; }
+    public long SectionStartTimeMs { get; set; }
+    public string? DefeatReason { get; set; }
 }
 
 public sealed class CombatantState
@@ -65,6 +71,7 @@ public sealed class CombatantState
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public bool IsEnemy { get; set; }
+    public string Role { get; set; } = "adventurer";
     public long SpawnSequence { get; set; }
     public BattleStats Stats { get; set; } = BattleStats.Standard;
     public string WeaponType { get; set; } = "sword";
@@ -95,6 +102,14 @@ public sealed class CombatantState
     public int AnchorX { get; set; }
     public int AnchorY { get; set; }
     public int PathIndex { get; set; }
+    public int DeploymentX { get; set; }
+    public int DeploymentY { get; set; }
+    public int MarchPathIndex { get; set; }
+    public bool MarchJoined { get; set; }
+    public bool IsEngaged { get; set; }
+    public bool ReturningToMarch { get; set; }
+    public Rational EngagementX { get; set; }
+    public Rational EngagementY { get; set; }
     public string TargetPreset { get; set; } = "arrival";
     public string? CurrentTargetId { get; set; }
     public Rational AttackReadyAtMs { get; set; }

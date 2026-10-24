@@ -14,17 +14,19 @@ public sealed partial class GameController
         var won = session.Phase == "Victory";
         var participants = battle.State.Units.Where(x => !x.IsEnemy && x.EverDeployed).OrderBy(x => x.Id, StringComparer.Ordinal).ToArray();
         var stage = session.Current.Setup.Content.Stages.Single(x => x.Id == session.Current.Setup.StageId);
-        var completedWaves = won ? stage.Waves.Count : Math.Max(0, battle.State.Wave - 1);
+        var totalSections = battle.TotalWaves;
+        var completedWaves = won ? totalSections : Math.Max(0, battle.State.Wave - 1);
         Rational difference = participants.Length == 0 ? 0 : new Rational(stage.RewardRank) - new Rational(participants.Aggregate(BigInteger.Zero, (sum, x) => sum + session.StartingRanks[x.Id]), participants.Length);
         var coefficient = Rational.Clamp(1 + new Rational(1, 20) * difference, new Rational(1, 4), 2);
-        var xp = ((100 + 20 * new Rational(stage.RewardRank)) * coefficient * (won ? Rational.One : new Rational(completedWaves, 4 * stage.Waves.Count))).Floor();
+        var xp = ((100 + 20 * new Rational(stage.RewardRank)) * coefficient * (won ? Rational.One : new Rational(completedWaves, 4 * totalSections))).Floor();
         foreach (var actor in profile.Adventurers.OrderBy(x => x.Id, StringComparer.Ordinal))
         {
             var unit = battle.State.Units.Single(x => x.Id == actor.Id);
             var wasIncapacitated = unit.EverDeployed && unit.Hp == 0;
             actor.WeaknessStacks = wasIncapacitated ? actor.WeaknessStacks + 1 : 0;
             var referenceMax = PersistentMaximumHp(actor);
-            actor.Hp = wasIncapacitated ? BigInteger.One : BigInteger.Min(referenceMax, unit.Hp + new Rational(referenceMax, 2).Ceiling());
+            var finalHp = battle.IsInvasion && !unit.EverDeployed ? actor.Hp : unit.Hp;
+            actor.Hp = wasIncapacitated ? BigInteger.One : BigInteger.Min(referenceMax, finalHp + new Rational(referenceMax, 2).Ceiling());
             if (!unit.EverDeployed) continue;
             actor.NextMatchChanges.Clear();
             actor.Experience += xp;
@@ -36,7 +38,7 @@ public sealed partial class GameController
             }
         }
         // Explicit technical-fixture rewards; this is not adoption of the production balance table.
-        var reward = won ? new BigInteger(1000) : new BigInteger(100 * completedWaves);
+        var reward = won ? new BigInteger(battle.IsInvasion ? 300 : 1000) : new BigInteger(100 * completedWaves);
         profile.Resources += reward;
         if (won)
         {
