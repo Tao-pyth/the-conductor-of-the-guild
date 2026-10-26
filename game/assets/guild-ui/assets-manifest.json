@@ -1,0 +1,111 @@
+{
+  "schema": "guild-ui-assets-v1",
+  "created": "2026-10-25",
+  "generator": "OpenAI built-in image_gen tool",
+  "purpose": "Approved light civic guild UI implementation assets",
+  "reference": "C:/Users/takuy/.codex/visualizations/2026/10/25/01a170d7-f125-7712-9b3e-ca3c1ecf4604/guild-fullhd-ui/guild-preparation-master.png",
+  "notes": [
+    "Images are newly generated assets, not extracted UI labels.",
+    "Original generated PNGs remain in the Codex generated_images directory.",
+    "No image editing, resizing, cropping or alpha postprocessing was applied.",
+    "paper-desk is opaque; the other five assets have true alpha transparency."
+  ],
+  "assets": [
+    {
+      "file": "paper-desk.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "789613d0317a8e86726330a6f0aeaf2e41f848447db909aa06f1d3acfd2970cc",
+      "bytes": 1613544,
+      "generatedSource": "C:\\Users\\takuy\\.codex\\generated_images\\01a17101-e154-78f1-b148-9b13de86d6c6\\exec-300d126b-f5bd-48f1-a845-545f2f713a9c.png",
+      "prompt": "Use case: game UI background texture. Create the PAPER DESK BACKGROUND ONLY for the attached approved light civic adventurers' guild interface. The reference is mood/style guidance, NOT UI content to reproduce. Output ONE full-frame 16:9 background, target1920×1080. Almost the whole image is uniformly warm white/pale ivory clean stationery (#fffcf3-like), extremely subtle fine paper grain with no stain, fold, vignette or significant brightness variation. At the very outer edge only, a thin pale honey-oak wooden frame, about18pixels at1920width. No extra nested frames. Bright daylight, welcoming public institution. The middle96% is empty flat paper so dark dynamic UI labels remain perfectly legible. NO TEXT, letters, numbers, symbols, crests, flags, buildings, lines, dividers, icons, seals, stamps, button shapes, map, shadows from objects or ornaments in the empty center. Do not copy any actual interface labels from the reference. This is a reusable unobtrusive background bitmap, not a screenshot."
+    },
+    {
+      "file": "guild-crest.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "sha256": "8d339737b08a585133493a06f03f0a1f62c284ec20fc0bf09e2095cbb1bbca54",
+      "bytes": 2129112,
+      "alpha_range": [
+        0,
+        254
+      ],
+      "generatedSource": "C:\\Users\\takuy\\.codex\\generated_images\\01a17101-e154-78f1-b148-9b13de86d6c6\\exec-25edfbcb-a61a-4cd7-a000-fc552fa51376.png",
+      "prompt": "Use case: game UI ornament asset, logo-brand. Generate just the civic ADVENTURERS' GUILD banner crest from the upper-left of the attached reference, isolated on a truly TRANSPARENT alpha background. Keep the approved refined hand-painted storybook-game style: a flat front-facing blueGREEN/teal pennant with a pointed swallow-like lower tip, narrow gold edge and restrained gold compass-rose/sun emblem, respectable public institution rather than occult faction. Very similar visual language to reference, but NO letters, numerals, words, inscription, outer frame, mount, wooden pole, scenery, shadows on a backdrop, UI, extra symbols, or glow. One complete crisp banner fills about85% of a vertical2:3canvas, no cropping, consistent empty transparent margin about7%. Fabric subtle not heavily wrinkled. High legibility at displayed64×90pixels. Bright daylight gold and mutedteal. The entire surrounding canvas must be real alpha transparency, not white, checkerboard or colored background."
+    },
+    {
+      "file": "guild-panorama.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA",
+      "sha256": "584d402e631d22fec5d4d4268244704739272e318aafcdb4306113b02a1cc8a7",
+      "bytes": 1614295,
+      "alpha_range": [
+        0,
+        255
+      ],
+      "generatedSource": "C:\\Users\\takuy\\.codex\\generated_images\\01a17101-e154-78f1-b148-9b13de86d6c6\\exec-642eb709-78a7-4d25-bedc-031e98ea5f3f.png",
+      "prompt": "Use case: game UI decorative panorama asset. Create ONLY the thin civic-guild architecture illustration that appears at the right of the next-wave strip in the attached approved interface. Style reference only, no labels/UI. Output a wide3:1panoramic vignette of a respectable public adventurers' guild building and stone town gate, light cream limestone, blueGREEN/gold small banners matching the reference crest, leafy green trees and a little pale blue sky/cloud. Bright cheerful daytime, elegant hand-painted Japanese fantasy strategy-game illustration with clean fine ink and soft watercolor-like color, welcoming civic organization, not a military fortress or dark occult guild. Composition low skyline with a prominent but modest arched wooden guild entrance towardright. Keep top and left airy for text. Softly dissolve the bottom and left edge into TRANSPARENT alpha so it can sit on ivory paper without a hard rectangular edge. No foreground people, weapons, monsters, characters, signs, letters, numbers, shields with text, UI, borders, seals, map or HUD. One continuous scene, shallow depth and small detail, intended to display about420×90pixels. Real alpha transparency surrounding the vignette."
+    },
+    {
+      "file": "wooden-stamp.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "sha256": "ad8a20e0794b1e6eed283721af01ce1d6ba1898c0325d297f880f140a85bec03",
+      "bytes": 1847130,
+      "alpha_range": [
+        0,
+        254
+      ],
+      "generatedSource": "C:\\Users\\takuy\\.codex\\generated_images\\01a17101-e154-78f1-b148-9b13de86d6c6\\exec-b83a0c9f-592e-4d3b-b695-1186e4bdc9bd.png",
+      "prompt": "Use case: game UI prop cutout. Generate ONLY one small elegant wooden official seal/stamp HANDLE prop matching the wooden stamp resting at lower-right in the attached approved civic adventurers' guild UI. Isolate it on genuine TRANSPARENT background, no paper or surroundings. Polished warm honey-brown wood with spherical rounded handle, two subtle ring mouldings, stout neck and square/octagonal flat base, slightly tilted diagonally as if resting beside an official form. One complete object no cropping, filling85% of a portrait2:3canvas with small clear transparent margins. Refined hand-painted fantasy strategy-game object illustration, clean dark outline, soft daylight highlights, warm woodgrain, restrained gold/brass narrow detail if appropriate. The wooden BASE SHOULD BE BLANK: NO written characters, text, emblem, engraving, seal impression, red inkmark, label or separate stamp print. No shadow on a backdrop; only intrinsic shading. No hands, pens, inkpad, paper, extra props, UI, frames or scenery. It will display roughly72×100px next to the dynamically drawn red approval button, so silhouette must read clearly and not look photorealistic."
+    },
+    {
+      "file": "weapon-atlas.png",
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA",
+      "sha256": "d4c62884752b267426e425a99049aef721cae97f4c380cab4f060b25df33dfd4",
+      "bytes": 606117,
+      "alpha_range": [
+        0,
+        255
+      ],
+      "generatedSource": "C:\\Users\\takuy\\.codex\\generated_images\\01a17101-e154-78f1-b148-9b13de86d6c6\\exec-2a02b967-9695-4f21-8b96-d97fb750c684.png",
+      "prompt": "Use case: game weapon icon sprite atlas. Generate ONE transparentPNG sprite sheet with a single horizontal row of FIVE equal-width square cells, overall aspectratio5:1. If output constraints require a3:1canvas, retain FIVE EQUAL WIDTH COLUMNS over the full canvas, icons verticallycentered with transparent space above and below. NO TEXT, no labels, no letters, no numbers, no cell borders, no background, no shadow on a backdrop.\nFive icons left to right EXACTLY:\n1 SHORT SWORD: broad short steel blade, clear crossguard, brown grip.\n2 LONG SPEAR: thin straight brown wooden shaft, SMALL triangular steel spearhead, no crossguard, most of visiblelength is shaft, clearly not a sword.\n3 BOW: curved brown wooden bow with thin taut string, no arrow needed.\n4 STAFF: dark brown magic staff with rounded loop or tiny teal crystal at top, clear staff silhouette.\n5 WAR HAMMER: short brown handle and broad rectangular steel hammer head, one simple transverse block, NOT an axe, no cutting-edge blade.\nFor exact runtime slicing, place each icon entirely INSIDE its own20%width zone with margins of15%withinthatcell. Iconcenters at x=10%,30%,50%,70%,90% of canvaswidth, y=50%height. All5 icons have the same visibleheight, around70%ofcanvasheight, no parts crossing the x=20/40/60/80%boundaries. No extra duplicate objects.\nStyle matches the attached civic adventurers' guild interface: elegant readable hand-illustrated strategy-game equipment glyphs, dark green-black fine outline, warm brown wood, subdued steel, tiny gold/teal accents, minimal detail and no excessive3Dshine. Designed to read at32–48pixels. Diagonal orientation about45degrees is fine, but every icon must have distinct silhouette. Authentic TRANSPARENT alpha aroundallfive icons, never white or checkerboard. The reference is style only, do not copy UI or HP bars.",
+      "atlas": {
+        "columns": 5,
+        "order": [
+          "sword",
+          "spear",
+          "bow",
+          "staff",
+          "hammer"
+        ],
+        "columnWidth": 434.4,
+        "recommendedTextureRegionY": 100,
+        "recommendedTextureRegionHeight": 520
+      }
+    }
+    ,
+    {
+      "file": "gate-token.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "f70109c9e26950e4e6e95d585b6ce3602f14d5ff7d7f324cd608e15ebda0548f",
+      "bytes": 1470075,
+      "alpha_range": [
+        0,
+        255
+      ],
+      "generatedSource": "C:/Users/takuy/.codex/generated_images/01a17101-e154-78f1-b148-9b13de86d6c6/exec-3472a57a-7bea-4273-826f-d56922451f82.png",
+      "prompt": "Use case: game map objective illustration token. Create ONE tiny civic adventurers' guild DEFENSE GATE token matching the small stone gate at the right end of the road in the attached approved gameUI. The reference is artstyle and object guidance only; generate no UI labels or background.\nTarget design512×512square. One complete freestanding compact STONE GATEHOUSE / short stout tower, frontal view with a very slight topdown angle so a few pale stone battlements are visible. Small arched warm-brown wooden door. A single deep blueGREEN/teal hanging banner on the front or right side, with a simple small gold compass-rose motif matching the civic guild crest, NO words or letters. Pale limestone/ivory stones, muted gold trim, clean dark green-gray outline. Refined hand-painted Japanese strategy-game illustration, daylight, friendly public institution, not an evil fortress. It must read clearly at36–64pixels.\nThe gate is centered and fills about80–85%ofcanvas, with even transparent margin, no cropping. Strong simple silhouette, no huge spires or background castle. GENUINE TRANSPARENT alpha surrounding the building. NO grass, bushes, trees, rocks, path, groundtile, shadow on backdrop, people, characters, weapons, text, numbers, arrows, shieldframe, darkbackground, UI or extra buildings. Only this one short gatehouse with its guildbanner.",
+      "designWidth": 512,
+      "designHeight": 512
+    }
+  ]
+}

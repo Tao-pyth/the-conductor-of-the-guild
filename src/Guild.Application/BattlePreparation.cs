@@ -6,6 +6,31 @@ namespace Guild.Application;
 
 public sealed partial class GameController
 {
+    // Sortie and its read-only preview must use the same saved equipment and preparation steps.
+    private List<BattleUnitSetup> BuildOwnedBattleSetups(ContentBundle definitions)
+        => profile.Adventurers.Select(actor =>
+        {
+            var weapon = profile.Weapons.Single(x => x.Id == actor.WeaponId && x.OwnerId == actor.Id);
+            return new BattleUnitSetup
+            {
+                Id = actor.Id, Name = actor.Name, Stats = EffectiveStats(actor, true, definitions),
+                WeaponTemplateId = weapon.TemplateId, BasePower = weapon.BasePower,
+                AttackIntervalMs = weapon.AttackIntervalMs, RangeCenti = weapon.RangeCenti,
+                SkillIds = weapon.SkillIds.ToList(), CurrentHp = actor.Hp
+            };
+        }).ToList();
+
+    private void ApplyOwnedBattleModifiers(BattleSimulation simulation, ContentBundle definitions)
+    {
+        foreach (var actor in profile.Adventurers)
+        {
+            var unit = simulation.State.Units.Single(x => x.Id == actor.Id);
+            unit.MaxHpMultiplier = 1 - new Rational(actor.WeaknessStacks * 5, 100);
+            simulation.RecalculateUnit(actor.Id);
+            ApplyBattleModifiers(actor, unit, definitions, simulation);
+        }
+    }
+
     private static readonly HashSet<string> SupportedBattleParameters = new(StringComparer.Ordinal)
     {
         "str", "vit", "dex", "agi", "int", "max-hp", "physical-defense", "magical-defense",
@@ -23,13 +48,13 @@ public sealed partial class GameController
     private static void ValidateSupportedModifier(ModifierDefinition component, ContentBundle definitions)
     {
         if (component.Condition is not null)
-            throw new InvalidDataException($"加護成分 {component.Id} の条件付き効果は、この技術検証版では未対応です。");
+            throw new InvalidDataException(DisplayText.Format("app.error.unsupportedConditionalModifier", component.Id));
         if (!SupportedBattleParameters.Contains(component.ParameterId))
-            throw new InvalidDataException($"加護成分 {component.Id} の作用先 {component.ParameterId} は登録のみで、効果の適用には未対応です。");
+            throw new InvalidDataException(DisplayText.Format("app.error.unsupportedModifierParameter", component.Id, component.ParameterId));
         if (definitions.Parameters.All(p => p.Id != component.ParameterId))
-            throw new InvalidDataException($"加護成分 {component.Id} のパラメータ定義がありません。");
+            throw new InvalidDataException(DisplayText.Format("app.error.missingModifierParameter", component.Id));
         if ((component.SkillId is not null || component.Slot is not null) && component.ParameterId != "attack-power")
-            throw new InvalidDataException($"加護成分 {component.Id} の技能・実枠指定は、現在 attack-power のみに対応します。");
+            throw new InvalidDataException(DisplayText.Format("app.error.unsupportedTargetedModifier", component.Id));
     }
 
     private static ModifierDefinition[] ActiveBlessingComponents(AdventurerState actor, ContentBundle definitions)
@@ -84,7 +109,7 @@ public sealed partial class GameController
             var targetPower = EvaluatePreparedParameter("attack-power", rawAttack, definitions, applicable);
             var commonPower = unit.PreparedAttackPower.Value;
             if (commonPower == 0 && targetPower != 0)
-                throw new InvalidDataException("共通攻撃値0から技能指定だけで正値へ戻す補正には未対応です。定義を調整してください。");
+                throw new InvalidDataException(DisplayText.Get("app.error.unsupportedZeroAttackCorrection"));
             unit.SkillModifiers.Add(new SkillModifier
             {
                 Id = preparedPrefix + actor.Id + ":" + slot.Slot,
@@ -97,6 +122,6 @@ public sealed partial class GameController
         // The constructor initially clamps HP against unmodified stats. Restore persisted HP before
         // applying the permanent reference and the distinct weakness/Lv temporary stage.
         unit.Hp = actor.Hp;
-        if (!simulation.RecalculateUnit(unit.Id)) throw new InvalidOperationException("冒険者の戦闘値を更新できません。");
+        if (!simulation.RecalculateUnit(unit.Id)) throw new InvalidOperationException(DisplayText.Get("app.error.cannotRecalculateUnit"));
     }
 }

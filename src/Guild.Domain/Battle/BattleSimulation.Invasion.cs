@@ -120,12 +120,7 @@ public sealed partial class BattleSimulation
 
     private Rational InvasionMoveDistance(CombatantState unit)
     {
-        var speed = unit.IsEnemy ? unit.EnemySpeedCentiPerSecond
-            : (unit.PreparedMoveCentiPerSecond ?? (300 + new Rational(5) * unit.Stats.Agi))
-                * Rational.Max(0, unit.MoveMultiplier + unit.LevelMoveMultiplier - 1);
-        var slow = unit.Statuses.Where(s => s.Kind == "slow" && s.ExpiresAtMs > State.TimeMs)
-            .Select(s => s.Strength).DefaultIfEmpty().Max();
-        return speed * new Rational(TickMs, 100000) * Rational.Clamp(1 - slow, 0, 1);
+        return EffectiveMoveCentiPerSecond(unit) * new Rational(TickMs, 100000);
     }
 
     private void MoveInvasion(CombatantState unit)

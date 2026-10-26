@@ -214,7 +214,7 @@ public sealed class InvasionApplicationTests : IDisposable
             backup = Assert.IsType<string>(game.MigrationBackupPath);
             Assert.True(File.Exists(backup));
             Assert.Equal("defense", game.View.Mode); Assert.Equal("Battle", game.View.Screen);
-            Assert.Equal(2, ReadProfile().FormatVersion); Assert.Equal(2, ReadSession().FormatVersion);
+            Assert.Equal(3, ReadProfile().FormatVersion); Assert.Equal(3, ReadSession().FormatVersion);
             Assert.Equal(beforeSession.ContentHash, ReadSession().ContentHash);
             Assert.Equal(Json(beforeProfile.Weapons), Json(ReadProfile().Weapons));
             Assert.Equal(Json(beforeProfile.Adventurers), Json(ReadProfile().Adventurers));
@@ -223,7 +223,7 @@ public sealed class InvasionApplicationTests : IDisposable
             Assert.Equal(1, JsonSerializer.Deserialize<PlayerProfile>(store.ReadDocument("profile")!, DomainJson.Options)!.FormatVersion);
         using var reopened = new GameController(Save, Content);
         Assert.Null(reopened.MigrationBackupPath);
-        Assert.Single(Directory.GetFiles(root, "*.before-documents-v2-*.backup"));
+        Assert.Single(Directory.GetFiles(root, "*.before-documents-v3-*.backup"));
     }
 
     [Theory]
@@ -239,7 +239,7 @@ public sealed class InvasionApplicationTests : IDisposable
         using var store = new SaveStore(Save);
         Assert.Equal(profileJson, store.ReadDocument("profile")); Assert.Equal(sessionJson, store.ReadDocument("session"));
         Assert.Equal("ok", store.IntegrityCheck());
-        Assert.Single(Directory.GetFiles(root, "*.before-documents-v2-*.backup"));
+        Assert.Single(Directory.GetFiles(root, "*.before-documents-v3-*.backup"));
     }
 
     [Fact]
@@ -249,9 +249,9 @@ public sealed class InvasionApplicationTests : IDisposable
         WriteDocuments(File.ReadAllText(Path.Combine(fixture, "profile-profile.json")), "null");
         using (var game = new GameController(Save, Content, stage => { if (stage == CommitStage.AfterCommit) throw new IOException("lost migration ack"); }))
             Assert.Equal("Guild", game.View.Screen);
-        Assert.Equal(2, ReadProfile().FormatVersion);
+        Assert.Equal(3, ReadProfile().FormatVersion);
         using var reopened = new GameController(Save, Content);
-        Assert.Single(Directory.GetFiles(root, "*.before-documents-v2-*.backup"));
+        Assert.Single(Directory.GetFiles(root, "*.before-documents-v3-*.backup"));
     }
 
     [Fact]

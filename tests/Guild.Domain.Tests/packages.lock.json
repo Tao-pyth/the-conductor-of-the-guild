@@ -141,8 +141,8 @@
       "guild.application": {
         "type": "Project",
         "dependencies": {
-          "Guild.Domain": "[0.3.0, )",
-          "Guild.Persistence": "[0.3.0, )"
+          "Guild.Domain": "[0.4.0-dev, )",
+          "Guild.Persistence": "[0.4.0-dev, )"
         }
       },
       "guild.domain": {
@@ -151,7 +151,7 @@
       "guild.persistence": {
         "type": "Project",
         "dependencies": {
-          "Guild.Domain": "[0.3.0, )",
+          "Guild.Domain": "[0.4.0-dev, )",
           "Microsoft.Data.Sqlite": "[10.0.13, )"
         }
       }

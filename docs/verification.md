@@ -1,5 +1,15 @@
 # 実装・検証結果
 
+## ローカル0.5.0-dev：派遣・素材納品・金貨
+
+今回の全自動検証・実画面・配布実体の最新状況は[専用検証記録](guild_economy_verification_v0.5.0-dev.md)を参照してください。過去版の件数と成功を今回の確認へ流用しません。正式baselineはv0.3.0を維持します。
+
+## 0.4.0-dev — ローカル配布候補（2026-10-25）
+
+[0.4機能仕様](player_decision_support_v0.4.0.md)のV04-AC01〜14と[ローカル契約](release_contract_v0.4.0.md)に従い、全192テスト成功、失敗0、スキップ0を確認。Release/ExportReleaseは警告・エラー0。候補ZIPのSDK不要32シナリオも成功し、新規防衛の接触、成長対象、能力/技能/費用、準備範囲/次敵、旧保存、再開・帰還を確認した。[専用検証記録](player_decision_support_verification_v0.4.0.md)にTRX・ログ・PNG/実寸と最終実体の照合記録先を示す。
+
+既存123件と旧保存/goldenは回帰対象。以下の0.2/0.3の成功履歴はそのまま保持し、0.4の実施結果とは分ける。正式baselineはv0.3.0、0.4の成果はローカルZIPまででコミットや外部公開は行わない。
+
 ## v0.3.0 正式公開の検証 — 2026-10-25
 
 ユーザーのコミット・正式公開依頼により、[v0.3.0公開契約](release_contract_v0.3.0.md)で既存のローカル契約を今回の公開操作について更新した。侵攻の機能・初期値・18項目の受入条件は維持する。
@@ -100,3 +110,7 @@ dotnet test tests/Guild.Domain.Tests/Guild.Domain.Tests.csproj --configuration R
 - Commit/Push/PR/Tag/GitHub Release/外部公開は今回のRelease Contractでnot-required。公開操作は行っていない。
 
 ローカル実装・検証・文書・パッケージの契約は完了。OODAの結果は `completed_no_release` とする。
+
+## 0.4.0-dev UIフィードバック7点
+
+現在の追加修正・全207テスト・今回の実画面とWindows実体は[追加検証記録](ui_feedback_verification_v0.4.0-dev.md)を参照する。旧UIの49条件成功記録は以前の成果物の証拠として保持する。新しいZIPはartifacts/guild-feedback-v0.4.0-devへ保存する。

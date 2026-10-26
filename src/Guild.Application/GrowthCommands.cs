@@ -10,72 +10,64 @@ public sealed partial class GameController
 {
     private string ReturnToGuild()
     {
-        if (session?.Phase is not ("Victory" or "Defeat") || battle is null) throw new InvalidOperationException("勝敗決定後に帰還できます。途中撤退はできません。");
-        var won = session.Phase == "Victory";
-        var participants = battle.State.Units.Where(x => !x.IsEnemy && x.EverDeployed).OrderBy(x => x.Id, StringComparer.Ordinal).ToArray();
-        var stage = session.Current.Setup.Content.Stages.Single(x => x.Id == session.Current.Setup.StageId);
-        var totalSections = battle.TotalWaves;
-        var completedWaves = won ? totalSections : Math.Max(0, battle.State.Wave - 1);
-        Rational difference = participants.Length == 0 ? 0 : new Rational(stage.RewardRank) - new Rational(participants.Aggregate(BigInteger.Zero, (sum, x) => sum + session.StartingRanks[x.Id]), participants.Length);
-        var coefficient = Rational.Clamp(1 + new Rational(1, 20) * difference, new Rational(1, 4), 2);
-        var xp = ((100 + 20 * new Rational(stage.RewardRank)) * coefficient * (won ? Rational.One : new Rational(completedWaves, 4 * totalSections))).Floor();
-        foreach (var actor in profile.Adventurers.OrderBy(x => x.Id, StringComparer.Ordinal))
+        if (session?.Phase is not ("Victory" or "Defeat") || battle is null) throw new InvalidOperationException(DisplayText.Get("app.error.returnOnlyAfterResult"));
+        var plan = CalculateSettlement();
+        foreach (var result in plan.Actors)
         {
-            var unit = battle.State.Units.Single(x => x.Id == actor.Id);
-            var wasIncapacitated = unit.EverDeployed && unit.Hp == 0;
-            actor.WeaknessStacks = wasIncapacitated ? actor.WeaknessStacks + 1 : 0;
-            var referenceMax = PersistentMaximumHp(actor);
-            var finalHp = battle.IsInvasion && !unit.EverDeployed ? actor.Hp : unit.Hp;
-            actor.Hp = wasIncapacitated ? BigInteger.One : BigInteger.Min(referenceMax, finalHp + new Rational(referenceMax, 2).Ceiling());
-            if (!unit.EverDeployed) continue;
-            actor.NextMatchChanges.Clear();
-            actor.Experience += xp;
-            while (actor.Experience >= GameFormulas.RankExperienceForNext(actor.Rank))
+            var actor = result.Actor;
+            actor.WeaknessStacks = result.Weakness;
+            actor.Hp = result.Hp;
+            var dispatched = session.Economy?.Dispatch?.RankExperience.ContainsKey(actor.Id) == true;
+            if (!result.Participated && !dispatched) continue;
+            if (result.Participated) actor.NextMatchChanges.Clear();
+            actor.Experience = result.Experience;
+            while (actor.Rank < result.Rank)
             {
-                actor.Experience -= GameFormulas.RankExperienceForNext(actor.Rank);
                 actor.Rank++;
                 profile.PendingEvents.Add(new() { Id = Guid.NewGuid().ToString("N"), Sequence = profile.NextEventSequence++, ActorId = actor.Id, Rank = actor.Rank });
             }
         }
         // Explicit technical-fixture rewards; this is not adoption of the production balance table.
-        var reward = won ? new BigInteger(battle.IsInvasion ? 300 : 1000) : new BigInteger(100 * completedWaves);
-        profile.Resources += reward;
-        if (won)
+        profile.Resources += plan.ResourceGain;
+        if (plan.Victory)
         {
             profile.Weapons.Add(CreateWeapon("guild"));
             if (!profile.FirstClear) { profile.FirstClear = true; profile.RerollTickets++; profile.PurificationDrops++; }
         }
+        SettleEconomy(plan.Victory, plan.Victory ? battle.TotalWaves : Math.Max(0, battle.State.Wave - 1), battle.TotalWaves);
+        var description = session.Economy is null ? plan.Description : plan.Description + "\n" + profile.Economy.LastReport;
         session = null; battle = null; accumulator = 0; paused = false;
-        return $"結果を1回精算しました。拠点資源+{reward}、配置した冒険者のRank経験値+{xp}。";
+        return description;
     }
 
     private RankEventState CurrentEvent()
     {
         RequireGuild();
-        return profile.PendingEvents.OrderBy(x => x.Sequence).FirstOrDefault() ?? throw new InvalidOperationException("保留中のRankイベントはありません。");
+        return PeekGrowthEvent() ?? throw new InvalidOperationException(DisplayText.Get("app.error.noPendingEvent"));
     }
 
     private string BeginEvent(GameCommand command)
     {
         var pending = CurrentEvent();
-        if (pending.Kind is not null) throw new InvalidOperationException("選択済みのイベントを完了してください。");
+        if (command.ActorId is not null && command.ActorId != pending.ActorId
+            || command.TargetId is not null && command.TargetId != pending.Id)
+            throw new InvalidOperationException(DisplayText.Get("app.error.growthRecipientChanged"));
         var actor = Actor(pending.ActorId);
         var kind = command.Value ?? "blessing";
-        if (kind is not ("blessing" or "transfer" or "fusion" or "random")) throw new InvalidOperationException("イベントの種類を選んでください。");
+        var unavailable = GrowthEventUnavailableReason(pending, actor, kind);
+        if (unavailable is not null) throw new InvalidOperationException(unavailable);
         var random = Pcg32.Restore(profile.GrowthRng);
         if (kind == "blessing")
         {
             var choices = DrawBlessings(actor, content, random);
-            if (choices.Count == 0) throw new InvalidOperationException("取得できる加護がありません。イベントと破棄ボーナスは消費していません。");
+            if (choices.Count == 0) throw new InvalidOperationException(DisplayText.Get("app.growth.noEligibleBlessing"));
             pending.Candidates = choices;
         }
-        if (kind == "transfer" && !profile.Weapons.Any(x => x.OwnerId == "guild")) throw new InvalidOperationException("譲渡できる装備がありません。");
-        if (kind == "fusion" && EligibleRecipes(actor, content).Count == 0) throw new InvalidOperationException("条件を満たす合成素材がありません。");
         if (kind == "random") pending.FixedRandomResult = RollRandomResult(actor, random);
         pending.DefinitionJson = content.ToJson();
         pending.Kind = kind;
         profile.GrowthRng = random.Capture();
-        return $"{actor.Name}のRank {pending.Rank}イベントを選択しました。選択後は取消できません。";
+        return DisplayText.Format("history.event.selected", actor.Name, pending.Rank, EventKindName(kind));
     }
 
     private static readonly int[] RarityWeights = [100, 80, 64, 50, 40, 25, 15, 8, 3, 1];
@@ -128,12 +120,17 @@ public sealed partial class GameController
     private string ChooseBlessing(GameCommand command)
     {
         var pending = CurrentEvent();
-        if (pending.Kind is not ("blessing" or "random") || !pending.Candidates.Contains(command.TargetId ?? "")) throw new InvalidOperationException("提示中の加護を選んでください。");
+        if (pending.Kind is not ("blessing" or "random") || !pending.Candidates.Contains(command.TargetId ?? "")) throw new InvalidOperationException(DisplayText.Get("app.error.chooseOfferedBlessing"));
         var actor = Actor(pending.ActorId);
+        var definitions = EventContent(pending);
+        var oldRank = actor.Blessings.FirstOrDefault(x => x.Id == command.TargetId)?.Rank ?? 0;
+        var removed = oldRank == 0 && actor.Blessings.Count >= 6
+            ? actor.Blessings.FirstOrDefault(x => x.Id == command.Value?.Split(' ', 2)[0]) : null;
         AcquireBlessing(actor, command.TargetId!, command.Value);
         if (pending.Kind == "blessing") actor.DiscardBonus = 0;
         CompleteEvent(pending);
-        return $"{actor.Name}の加護取得を確定しました。";
+        return DescribeAcquisition(actor.Name, definitions.Blessings.Single(x => x.Id == command.TargetId).Name,
+            oldRank, oldRank + 1, removed is null ? null : definitions.Blessings.Single(x => x.Id == removed.Id).Name, removed?.Rank ?? 0);
     }
 
     private static void AcquireBlessing(AdventurerState actor, string blessingId, string? replacement = null)
@@ -141,14 +138,14 @@ public sealed partial class GameController
         var owned = actor.Blessings.FirstOrDefault(x => x.Id == blessingId);
         if (owned is not null)
         {
-            if (owned.Rank >= 3) throw new InvalidOperationException("Rank IIIの加護は取得できません。");
+            if (owned.Rank >= 3) throw new InvalidOperationException(DisplayText.Get("app.error.blessingRankCap"));
             owned.Rank++; return;
         }
         if (actor.Blessings.Count >= 6)
         {
             var replacementId = replacement?.Split(' ', 2)[0];
             var removed = actor.Blessings.FirstOrDefault(x => x.Id == replacementId);
-            if (removed is null) throw new InvalidOperationException("入れ替える加護を選んでください。");
+            if (removed is null) throw new InvalidOperationException(DisplayText.Get("app.error.chooseReplacedBlessing"));
             actor.Blessings.Remove(removed);
         }
         actor.Blessings.Add(new() { Id = blessingId });
@@ -157,52 +154,52 @@ public sealed partial class GameController
     private string DiscardBlessings()
     {
         var pending = CurrentEvent();
-        if (pending.Kind != "blessing" || pending.Candidates.Count == 0) throw new InvalidOperationException("破棄できる候補はありません。");
+        if (pending.Kind != "blessing" || pending.Candidates.Count == 0) throw new InvalidOperationException(DisplayText.Get("app.error.noDiscardableChoices"));
         var actor = Actor(pending.ActorId);
         actor.DiscardBonus = Math.Min(5, actor.DiscardBonus + 1); CompleteEvent(pending);
-        return $"全候補を破棄しました。次回候補ボーナス+{actor.DiscardBonus}。";
+        return DisplayText.Format("history.blessing.discard", actor.Name, actor.DiscardBonus);
     }
 
     private string RerollBlessings()
     {
         var pending = CurrentEvent();
-        if (pending.Kind != "blessing" || pending.Rerolled || profile.RerollTickets < 1) throw new InvalidOperationException("再選の札がないか、このイベントでは使用済みです。");
+        if (pending.Kind != "blessing" || pending.Rerolled || profile.RerollTickets < 1) throw new InvalidOperationException(DisplayText.Get("app.error.noRerollAvailable"));
         var random = Pcg32.Restore(profile.GrowthRng);
         pending.Candidates = DrawBlessings(Actor(pending.ActorId), EventContent(pending), random);
         pending.Rerolled = true; profile.RerollTickets--; profile.GrowthRng = random.Capture();
-        return "再選の札を1枚消費して候補全体を再抽選しました。";
+        return DisplayText.Format("history.blessing.reroll", Actor(pending.ActorId).Name);
     }
 
     private string TransferItem(GameCommand command)
     {
         var pending = CurrentEvent();
-        if (pending.Kind != "transfer") throw new InvalidOperationException("装備譲渡イベントを選択してください。");
+        if (pending.Kind != "transfer") throw new InvalidOperationException(DisplayText.Get("app.error.chooseTransferEvent"));
         var actor = Actor(pending.ActorId);
-        var weapon = profile.Weapons.FirstOrDefault(x => x.Id == command.TargetId && x.OwnerId == "guild") ?? throw new InvalidOperationException("ユーザー所有装備を選んでください。");
+        var weapon = profile.Weapons.FirstOrDefault(x => x.Id == command.TargetId && x.OwnerId == "guild") ?? throw new InvalidOperationException(DisplayText.Get("app.error.chooseGuildItem"));
         weapon.OwnerId = actor.Id; CompleteEvent(pending);
-        return $"{weapon.Name}を{actor.Name}へ譲渡しました。返却や冒険者間移動はできません。";
+        return DisplayText.Format("app.transfer.completed", weapon.Name, actor.Name);
     }
 
     private string EquipItem(GameCommand command)
     {
         RequireGuild();
         var actor = Actor(command.ActorId);
-        var weapon = profile.Weapons.FirstOrDefault(x => x.Id == command.TargetId && x.OwnerId == actor.Id) ?? throw new InvalidOperationException("本人が所有する装備を選んでください。");
+        var weapon = profile.Weapons.FirstOrDefault(x => x.Id == command.TargetId && x.OwnerId == actor.Id) ?? throw new InvalidOperationException(DisplayText.Get("app.error.chooseOwnedItem"));
         actor.WeaponId = weapon.Id;
-        return $"{actor.Name}が{weapon.Name}を装備しました。";
+        return DisplayText.Format("app.equipment.completed", actor.Name, weapon.Name);
     }
 
     private string BuyWeapon(GameCommand command)
     {
         RequireGuild();
         var templateId = command.Value;
-        if (templateId is not null && content.WeaponTemplates.All(x => x.Id != templateId)) throw new InvalidOperationException("購入する武器種がありません。");
+        if (templateId is not null && content.WeaponTemplates.All(x => x.Id != templateId)) throw new InvalidOperationException(DisplayText.Get("app.error.noWeaponTypeToBuy"));
         var budget = templateId is null ? new Rational(100) : content.WeaponTemplates.Single(x => x.Id == templateId).Budget;
         var price = (budget * 10).Ceiling();
-        if (profile.Resources < price) throw new InvalidOperationException($"武器の購入には拠点資源{price}が必要です。");
+        if (profile.Resources < price) throw new InvalidOperationException(DisplayText.Format("app.error.weaponResources", price));
         var weapon = CreateWeapon("guild", templateId);
         profile.Weapons.Add(weapon); profile.Resources -= price;
-        return $"資源{price}で「{weapon.Name}」を購入しました。";
+        return DisplayText.Format("app.weapon.purchaseCompleted", price, weapon.Name);
     }
 
     private static List<RecipeDefinition> EligibleRecipes(AdventurerState actor, ContentBundle definitions)
@@ -213,9 +210,9 @@ public sealed partial class GameController
     private string Fuse(GameCommand command)
     {
         var pending = CurrentEvent();
-        if (pending.Kind != "fusion") throw new InvalidOperationException("合成イベントを選択してください。");
+        if (pending.Kind != "fusion") throw new InvalidOperationException(DisplayText.Get("app.error.chooseFusionEvent"));
         var definitions = EventContent(pending); var actor = Actor(pending.ActorId);
-        var recipe = EligibleRecipes(actor, definitions).FirstOrDefault(x => x.Id == command.TargetId) ?? throw new InvalidOperationException("合成条件を満たしていません。素材は消費していません。");
+        var recipe = EligibleRecipes(actor, definitions).FirstOrDefault(x => x.Id == command.TargetId) ?? throw new InvalidOperationException(DisplayText.Get("app.error.invalidFusion"));
         var inherited = new Dictionary<string, Rational>(StringComparer.Ordinal);
         foreach (var parentId in new[] { recipe.FirstBlessingId, recipe.SecondBlessingId })
         {
@@ -233,7 +230,10 @@ public sealed partial class GameController
         else existing.Rank++;
         profile.DiscoveredRecipes.Add(recipe.Id); CompleteEvent(pending);
         var name = definitions.Blessings.Single(x => x.Id == recipe.ResultBlessingId).Name;
-        return $"合成結果「{name}」を発見しました。数値は内部の分数を保持します。";
+        return DisplayText.Format("history.blessing.fuse", actor.Name,
+            definitions.Blessings.Single(x => x.Id == recipe.FirstBlessingId).Name,
+            definitions.Blessings.Single(x => x.Id == recipe.SecondBlessingId).Name,
+            name, Roman(actor.Blessings.Single(x => x.Id == recipe.ResultBlessingId).Rank));
     }
 
     private sealed record RandomOutcome(string Kind, string? Id, string? Stat, int Delta);
@@ -254,22 +254,23 @@ public sealed partial class GameController
     private string ResolveRandom()
     {
         var pending = CurrentEvent();
-        if (pending.Kind != "random" || pending.FixedRandomResult is null) throw new InvalidOperationException("ランダムイベントを選択してください。");
+        if (pending.Kind != "random" || pending.FixedRandomResult is null) throw new InvalidOperationException(DisplayText.Get("app.error.chooseRandomEvent"));
         var outcome = Deserialize<RandomOutcome>(pending.FixedRandomResult); var actor = Actor(pending.ActorId);
-        var message = "変化はありませんでした。";
+        var message = DisplayText.Format("app.random.noChange", actor.Name);
         switch (outcome.Kind)
         {
             case "equipment":
-                var weapon = CreateWeapon(actor.Id); profile.Weapons.Add(weapon); message = $"{actor.Name}が装備「{weapon.Name}」を獲得しました。"; break;
+                var weapon = CreateWeapon(actor.Id); profile.Weapons.Add(weapon); message = DisplayText.Format("app.random.weaponAcquired", actor.Name, weapon.Name); break;
             case "next":
                 actor.NextMatchChanges[outcome.Stat!] = actor.NextMatchChanges.GetValueOrDefault(outcome.Stat!) + outcome.Delta;
-                message = $"次の出撃で{outcome.Stat}に{outcome.Delta:+0;-0;0}を加算します。"; break;
+                message = DisplayText.Format("history.random.next", actor.Name, DisplayText.Get("app.parameter." + outcome.Stat), outcome.Delta); break;
             case "stat":
                 actor.Growth = ChangeStat(actor.Growth, outcome.Stat!, outcome.Delta);
-                message = $"{actor.Name}の{outcome.Stat}が恒久的に{outcome.Delta:+0;-0;0}変化しました。"; break;
+                message = DisplayText.Format("history.random.stat", actor.Name, DisplayText.Get("app.parameter." + outcome.Stat), outcome.Delta); break;
             case "blessing" when outcome.Id is not null:
                 pending.RandomRevealed = true; pending.Candidates = [outcome.Id];
-                return "加護の候補が判明しました。取得・進化・入れ替え、または辞退を選んでください。";
+                return DisplayText.Format("app.random.blessingsRevealed", actor.Name,
+                    EventContent(pending).Blessings.Single(x => x.Id == outcome.Id).Name);
         }
         CompleteEvent(pending); return message;
     }
@@ -277,9 +278,11 @@ public sealed partial class GameController
     private string DeclineRandom()
     {
         var pending = CurrentEvent();
-        if (pending.Kind != "random" || !pending.RandomRevealed || pending.Candidates.Count == 0) throw new InvalidOperationException("辞退できるランダム加護はありません。");
+        if (pending.Kind != "random" || !pending.RandomRevealed || pending.Candidates.Count == 0) throw new InvalidOperationException(DisplayText.Get("app.error.noRandomBlessingToDecline"));
+        var actor = Actor(pending.ActorId);
+        var name = EventContent(pending).Blessings.Single(x => x.Id == pending.Candidates[0]).Name;
         CompleteEvent(pending);
-        return "ランダム加護取得を辞退しました。通常破棄ボーナスは変わりません。";
+        return DisplayText.Format("history.blessing.decline", actor.Name, name);
     }
 
     private void CompleteEvent(RankEventState pending)
@@ -293,7 +296,7 @@ public sealed partial class GameController
     {
         "str" => basis with { Str = basis.Str + delta }, "vit" => basis with { Vit = basis.Vit + delta },
         "dex" => basis with { Dex = basis.Dex + delta }, "agi" => basis with { Agi = basis.Agi + delta },
-        "int" => basis with { Int = basis.Int + delta }, _ => throw new InvalidOperationException("未知の能力値です。")
+        "int" => basis with { Int = basis.Int + delta }, _ => throw new InvalidOperationException(DisplayText.Get("app.error.unknownAttribute"))
     };
 
     private BattleStats EffectiveStats(AdventurerState actor, bool includeNext = true, ContentBundle? definitions = null)
@@ -331,11 +334,11 @@ public sealed partial class GameController
             yield break;
         }
         var definition = definitions.Blessings.FirstOrDefault(x => x.Id == owned.Id);
-        if (definition is null) throw new InvalidDataException($"加護定義{owned.Id}がありません。");
+        if (definition is null) throw new InvalidDataException(DisplayText.Format("app.error.missingBlessingDefinition", owned.Id));
         foreach (var modifier in definition.Modifiers)
             yield return modifier with { Id = owned.Id + ":" + modifier.Id,
                 Amount = modifier.Stage == ModifierStage.Multiplicative ? 1 + (modifier.Amount - 1) * owned.Rank : modifier.Amount * owned.Rank };
     }
 
-    private static ContentBundle EventContent(RankEventState pending) => ContentBundle.FromJson(pending.DefinitionJson ?? throw new InvalidDataException("固定済みイベント定義がありません。"));
+    private static ContentBundle EventContent(RankEventState pending) => ContentBundle.FromJson(pending.DefinitionJson ?? throw new InvalidDataException(DisplayText.Get("app.error.missingFrozenEventContent")));
 }

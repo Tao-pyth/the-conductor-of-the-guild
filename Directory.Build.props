@@ -6,7 +6,7 @@
     <Deterministic>true</Deterministic>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <Version>0.3.0</Version>
+    <Version>0.5.0-dev</Version>
     <Optimize Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'ExportRelease'">true</Optimize>
   </PropertyGroup>
 </Project>

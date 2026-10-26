@@ -3,5 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="../Guild.Domain/Guild.Domain.csproj" />
     <ProjectReference Include="../Guild.Persistence/Guild.Persistence.csproj" />
+    <EmbeddedResource Include="../../data/text/ja/*.json" LogicalName="Guild.Application.DisplayText.ja.%(Filename).json" />
   </ItemGroup>
 </Project>

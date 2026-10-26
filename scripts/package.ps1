@@ -2,7 +2,7 @@
 param(
     [string]$GodotPath = 'godot',
     [string]$DotnetPath = 'dotnet',
-    [string]$Version = '0.3.0',
+    [string]$Version = '0.5.0-dev',
     [string]$OutputDirectory,
     [switch]$SkipBuild
 )
@@ -29,7 +29,14 @@ if ($projectSettings -notmatch ('(?m)^config/version="' + [regex]::Escape($Versi
     throw 'パッケージ名の版と project.godot の版が一致しません。版情報を更新してから実行してください。'
 }
 $releaseDocuments = @('user_guide.md', 'technical_specification.md', 'verification.md', 'implementation_contract.md')
-if ($Version -like '0.3.0*') {
+if ($Version -like '0.5.0*') {
+    $releaseDocuments += @('guild_economy_v0.5.0-dev.md', 'guild_economy_contract_v0.5.0-dev.md', 'guild_economy_verification_v0.5.0-dev.md', 'release_notes_v0.5.0-dev.md', 'display_text_catalog.md')
+    $releaseDocuments += @('player_decision_support_v0.4.0.md', 'player_decision_support_verification_v0.4.0.md', 'release_contract_v0.4.0.md', 'release_notes_v0.4.0.md', 'ui_layout_contract_v0.4.0-dev.md', 'ui_layout_verification_v0.4.0-dev.md', 'ui_feedback_contract_v0.4.0-dev.md', 'ui_feedback_verification_v0.4.0-dev.md')
+} elseif ($Version -like '0.4.0*') {
+    $releaseDocuments += @('player_decision_support_v0.4.0.md', 'player_decision_support_verification_v0.4.0.md', 'release_contract_v0.4.0.md', 'release_notes_v0.4.0.md')
+    $releaseDocuments += @('ui_layout_contract_v0.4.0-dev.md', 'ui_layout_verification_v0.4.0-dev.md')
+    $releaseDocuments += @('ui_feedback_contract_v0.4.0-dev.md', 'ui_feedback_verification_v0.4.0-dev.md', 'display_text_catalog.md')
+} elseif ($Version -like '0.3.0*') {
     $releaseDocuments += @('invasion_mode_spec_v0.3.0_draft.md', 'invasion_verification_v0.3.0.md')
     if ($Version -notlike '*dev*') {
         $releaseDocuments += @('release_contract_v0.3.0.md', 'release_notes_v0.3.0.md')
@@ -85,10 +92,31 @@ if ($exportExitCode -ne 0 -or ($exportText -match 'ERROR:') -or -not (Test-Path 
 $readmePath = Join-Path $projectRoot 'README.md'
 Copy-Item -LiteralPath $readmePath -Destination (Join-Path $packageDirectory 'README.md')
 Copy-Item -LiteralPath (Join-Path $projectRoot 'CHANGELOG.md') -Destination (Join-Path $packageDirectory 'CHANGELOG.md')
+if ($Version -like '0.5.0*') {
+    $economyVerification = Join-Path $projectRoot 'docs\guild_economy_verification_v0.5.0-dev.md'
+    if ((Get-Content -LiteralPath $economyVerification -Raw) -notmatch '(?m)^visual result: passed\r?$') {
+        throw '派遣・納品の視覚検証がpassedではありません。今回の検証記録を確認してください。'
+    }
+} elseif ($Version -like '0.4.0*') {
+    $qaPath = Join-Path $projectRoot 'design-qa.md'
+    if (-not (Test-Path -LiteralPath $qaPath) -or (Get-Content -LiteralPath $qaPath -Raw) -notmatch '(?m)^final result: passed\r?$') {
+        throw 'UI改修の視覚QAがpassedではありません。design-qa.mdを確認してください。'
+    }
+    Copy-Item -LiteralPath $qaPath -Destination (Join-Path $packageDirectory 'design-qa.md')
+}
 $packageDocs = Join-Path $packageDirectory 'docs'
 New-Item -ItemType Directory -Path $packageDocs -Force | Out-Null
 foreach ($releaseDocument in $releaseDocuments) {
     Copy-Item -LiteralPath (Join-Path (Join-Path $projectRoot 'docs') $releaseDocument) -Destination (Join-Path $packageDocs $releaseDocument)
+}
+if ($Version -like '0.4.0*' -or $Version -like '0.5.0*') {
+    $textCatalog = Join-Path $projectRoot 'data\text\ja'
+    $packageText = Join-Path $packageDirectory 'data\text'
+    New-Item -ItemType Directory -Path $packageText -Force | Out-Null
+    Copy-Item -LiteralPath $textCatalog -Destination (Join-Path $packageText 'ja') -Recurse
+}
+if ($Version -like '0.5.0*') {
+    Copy-Item -LiteralPath (Join-Path $projectRoot 'data\guild-economy.json') -Destination (Join-Path $packageDirectory 'data\guild-economy.json')
 }
 # Keep links to the small set of packaged guides local. References to design
 # catalogues that remain in the repository point to this release's source tag.

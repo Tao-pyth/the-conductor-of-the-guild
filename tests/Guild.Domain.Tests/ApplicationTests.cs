@@ -197,6 +197,11 @@ public sealed class ApplicationTests : IDisposable
         {
             Assert.True(game.Execute(new("StartMatch")).Success); DeployAll(game);
             Assert.True(game.Execute(new("StartWave")).Success);
+            using var store = new SaveStore(game.SavePath);
+            var checkpoints = JsonSerializer.Deserialize<MatchSession>(store.ReadDocument("session")!, DomainJson.Options)!;
+            Assert.Equal("defense-v2", checkpoints.Current.RuleSetId);
+            Assert.Equal("defense-v2", checkpoints.MatchStart!.RuleSetId);
+            Assert.Equal("defense-v2", checkpoints.WaveStart!.RuleSetId);
         }
         Assert.True(fast.Execute(new("SetSpeed", Value: "2")).Success);
         for (var frame = 0; frame < 600; frame++) normal.Advance(1.0 / 120);

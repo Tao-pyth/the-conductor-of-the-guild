@@ -1,4 +1,47 @@
-# 実装技術仕様 — v0.3.0
+# 実装技術仕様 — 0.5.0-dev / 正式baseline v0.3.0
+
+## 0.5.0-dev：派遣とギルド経済
+
+戦闘ContentBundleとは独立した`Guild.Domain.Economy`と埋込`data/guild-economy.json`で、成功率・素材成果・納品カタログを定義する。既存tech-contentのhashと戦闘ルールを変更しない。`DispatchCalculator`は厳密分数で3要素を計算し、最後に整数成功率へ切り捨てる。
+
+プロフィールの`Economy`は素材在庫、4勢力の協力実績/対立状態、派遣予約、未取得の納品装備実物、納品回数、独立した派遣/装備掲示乱数を保持する。派遣/納品を閲覧しても生成・消費しない。現在所持加護の種類を評価し、加護段階・希少度・合成素材の履歴を混同しない。
+
+新規マッチの`Economy`はカタログ版、拠出実額、固定素材表、派遣条件/メンバー/成功率/抽選値/個別経験値を保持する。全所有者の戦闘unitを残しつつ、派遣者の出撃/強化等をUIとApplicationで拒否する。純粋な準備可否/範囲照会も派遣不可と一致させる。
+
+主戦闘素材は最終試行の突破割合から帰還時に算出し、派遣結果は主戦闘勝敗と独立して精算する。派遣者は通常控えのHP回復から分離し、本人HP/衰弱/次回効果を保持する。派遣固有RankXPは主戦闘の参加者平均へ含めず、既存Rankイベントを生成する。
+
+金貨はギルド/任務別残高を維持する。出撃確定時に拠出を一度徴収し、任務1000枚へ追加する。再挑戦は既存MatchStart snapshotを復元し、ギルド金貨・派遣結果を巻き戻さない。帰還では残任務金貨を破棄し、契約報酬/素材/派遣解除を1回のSaveStore.Commitでまとめる。納品も素材消費と金貨/装備/協力実績/次の掲示装備を同時確定する。
+
+文書形式3へ旧1/2を読み取り検査→SQLite Backup→両文書の単一TXで移行する。SQLite schema1は維持。旧進行中マッチのEconomyはnullとし、戦闘定義・報酬・再開/再挑戦を旧挙動のまま扱う。形式3の必須経済項目欠落/未知版/負在庫/不正予約/派遣参加/率と報酬の不整合等を変更前に拒否する。
+
+詳細は[今回の仕様](guild_economy_v0.5.0-dev.md)、[契約](guild_economy_contract_v0.5.0-dev.md)、[検証](guild_economy_verification_v0.5.0-dev.md)。以下の0.4.0-dev節は、その時点の改修/保存形式を示す履歴として保持する。
+
+## 0.4.0-dev：公的ギルドUIと表示サイズ
+
+[UI改修契約](ui_layout_contract_v0.4.0-dev.md)に基づき、表示レイヤーを明るい紙・木材・紋章・朱印へ改修する。判断支援追加時の0.4契約は維持し、ゲームルールや保存形式を変えない。UI改修後の実行結果、実寸、アセット出典、配布物の照合は[UI検証記録](ui_layout_verification_v0.4.0-dev.md)へ分けて記録する。
+
+- Godotの論理viewportを1920×1080、stretchを`canvas_items`とする。HD1280×720でも同じ構成を使用し、最小ウィンドウ1000×640を保持する。16:9以外は比率を維持し、地図の平方マスを潰さない。
+- 配置準備は左名簿・中央地図・右配置記録の3列。名前/HP/状態、配置・XP購入・復帰費用、標的優先、開始を詳細本文の外へ出す。能力・技能・範囲条件の全文は中央領域で地図と切り替える。名簿・主要操作はそのまま保持する。
+- 共通の表示ボタン、F11でウィンドウ/全画面を切り替え、Escで全画面から戻る。切替前のサイズと位置をメモリ上に保持し、復帰時に適用する。永続設定やゲームコマンドを追加せず、表示切替でprofile/session/RNG/保存を更新しない。
+- 朱印ボタンは既存`StartWave`を即時に1回呼び出す。押印の短い表示反応は入力を受け取らず、開始遅延や追加承認フローを設けない。
+- `GuildMap`を画面構築から分離し、平方マス・座標余白・クリック・hover・試験入力を同じgeometryで計算する。通常射程/警戒/行動/技能の中心と半径は既存`RangeGuide`から取り、盤面の外へ線を漏らさず描く。配置可否・経路・移動・対象判定は変更しない。
+- `AdventurerView.WeaponType`は既存ユニットから供給する非永続の表示専用項目。武器名から種類を推測せず、実際の武器に対応するアイコンを表示する。セーブDTO・マッチ定義・コマンドhashは変更しない。
+- 紙/木、紋章、ギルドの風景、印鑑、武器アイコンは表示専用PNGを`game/assets/guild-ui`へ置く。数値・名前・資源・状態・ボタン本文を画像へ焼き込まず、実データから描画する。
+- ローカルZIP/SHA256は`artifacts/guild-ui-v0.4.0-dev`へ出力し、判断支援追加時のZIPを残す。正式baselineはv0.3.0、アプリ版は0.4.0-devのままで、コミット・外部公開は含めない。
+
+## 0.4.0-dev：防衛接触と判断材料
+
+[0.4機能仕様](player_decision_support_v0.4.0.md)と[ローカル契約](release_contract_v0.4.0.md)を使用する。今回はローカル実装・検証・Windows ZIPまでで、コミット・外部公開を含めない。実施結果は[0.4検証記録](player_decision_support_verification_v0.4.0.md)へ記録する。
+
+- 新規防衛はRuleSetId=defense-v2。敵の移動区間と円の接触に既存SegmentCircleEntryを使い、停止点が射程内であることを分数で確認する。通常の始動/硬直/攻撃選択と20ms更新を保持する。
+- 旧null/defense-v1は旧判定として復元し、invasion-v1は変更しない。Current/MatchStart/WaveStartのcanonicalなルール混在と未知IDを保存前に拒否する。nullの既定値をv2へ変えない。
+- 文書形式2、SimulationVersion1、SQLite schema1を維持し、既存データ・生成装備・固定定義hashを保持する。v0.3→0.4のDB移行や新しい永続設定は追加しない。既存形式1→2のbackup移行は回帰検証する。
+- 成長の先頭はSequence昇順の同じ照会からView/CurrentEvent/ロック/履歴へ供給する。BeginEventの既存ActorId/TargetIdを期待対象として照合し、ID省略の旧呼出しと保存済みCommandId再送を維持する。
+- NextGrowthEvent等の判断材料は非永続DTO。候補/ランダム/武器生成を表示で呼ばず、profile/session・乱数・履歴・資源・効果を変えない。次出撃性能と実出撃は同じセットアップ/補正処理を使い、準備中は固定マッチの実ユニットを参照する。
+- HP等の整数確定と分数の表示を分離する。表示単位へ変換してから数学的ceilし、実算定や保存値へ書き戻さない。UI独自の戦闘式を設けない。
+- 準備範囲は現在位置・指定アンカー・仮配置を区別する。技能の対象条件と射程を説明し、射程円を攻撃保証としない。次の敵は固定マッチ定義から実生成と同じ整数化で供給する。
+
+以下のv0.3.0および共通基盤の説明は履歴・継承事項。0.4の差分と実行範囲は上記を優先する。
 
 ## v0.3.0：侵攻モードと旧保存の移行
 
@@ -22,7 +65,7 @@ Godot 4.7.2 .NET版 / Compatibility、C# / .NET 10、Microsoft.Data.Sqlite 10.0.
 
 Windows配布の再現性を保つため、共通ビルド設定のRuntimeIdentifiersをwin-x64へ固定し、テスト/ゲームの依存復元を`--locked-mode`で確認する。Windows書出しがlockのRID構成を増減させないようにし、依存パッケージの版は変更しない。
 
-共通基盤の初回実装範囲は [implementation_contract.md](implementation_contract.md)、v0.2.0公開時の条件は [release_contract_v0.2.0.md](release_contract_v0.2.0.md) に記録している。今回の条件は [release_contract_v0.3.0.md](release_contract_v0.3.0.md) を使用する。製品要求の入口は [specification_status_v0.1.0.md](specification_status_v0.1.0.md) とし、既存の未確定仕様や候補数値を一括で確定済みにしない。
+共通基盤の初回実装範囲は [implementation_contract.md](implementation_contract.md)、過去の正式公開条件は [v0.2.0](release_contract_v0.2.0.md)・[v0.3.0](release_contract_v0.3.0.md) に記録している。現在の0.4ローカル作業は [release_contract_v0.4.0.md](release_contract_v0.4.0.md) を使用する。製品要求の入口は [specification_status_v0.1.0.md](specification_status_v0.1.0.md) とし、既存の未確定仕様や候補数値を一括で確定済みにしない。
 
 ## 数値と乱数
 
@@ -68,3 +111,11 @@ tech-*の防衛1ステージ10Waveと侵攻1ステージ3区画、5武器、5技
 Gitタグ `v0.3.0` に対応するWindows x64 ZIPとSHA256を [GitHub Release](https://github.com/Tao-pyth/the-conductor-of-the-guild/releases/tag/v0.3.0) で公開する。保存形式と戦闘処理の版は公開番号から独立しており、0.3.0-devから正式番号への昇格だけで保存を再生成したり再移行したりしない。形式1→2の移行と旧防衛の互換性は、前述の専用処理とテストで保護する。
 
 OS日本語IMEの変換・候補確定は未確認。性能測定値は条件付きの実測であり、最大負荷を描画する場合の60fpsや、すべてのPCの性能を保証しない。実行コマンドと確認範囲は [検証結果](verification.md) を参照する。
+
+## UIフィードバック対応の表示契約（0.4.0-dev）
+
+`data/text/ja/*.json`をApplication assemblyの埋込リソースにし、`DisplayText.Get/Format`でApplication/Godotが共用する。表示名と状態コードを分離し、カタログ変更をタブ・行動条件の判定へ使用しない。武器・技能・加護等の実定義名はtech-contentが正本で、UI説明と戦闘計算を混在させない。
+
+結果画面の`MatchResultView`は`CalculateSettlement`による純粋な精算計画から生成する。実際の`ReturnToGuild`も同じ計画を適用するため、Rank/HP/衰弱/資源見込みの計算を二重実装しない。画面閲覧は乱数・状態・保存・履歴を変更しない。
+
+`SaveStore.ReadHistory`は既存列kind/before_json/after_jsonも読み、`BuildGrowthHistory`で成長表示へ投影する。監査原記録を全件保持し、準備・Wave・一時Lv等を画面から除く。最終帰還ごとに1件の結果を表示し、Rankイベント/加護取得の具体的な内容をbefore/afterと固定定義から復元する。復元根拠がない旧記録を捏造しない。SQLite schema1、文書形式2と既存移行を維持する。

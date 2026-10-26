@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "version": "guild-economy-0.5.0-dev-1",
+  "materials": [
+    { "id": "wood", "name": "木材" },
+    { "id": "ore", "name": "鉱石" },
+    { "id": "herb", "name": "薬草" },
+    { "id": "crystal", "name": "魔力結晶" }
+  ],
+  "missions": [
+    {
+      "id": "recovery",
+      "name": "廃材回収",
+      "description": "使える木材と鉱石を集めます。槌・剣と剛力・剛健の加護が役立ちます。",
+      "recommendedRank": "1",
+      "recommendedMembers": 2,
+      "weaponTypes": ["hammer", "sword"],
+      "blessingIds": ["tech-strength", "tech-fused"],
+      "successMaterials": { "wood": "8", "ore": "4" }
+    },
+    {
+      "id": "patrol",
+      "name": "街道の補給巡回",
+      "description": "街道を巡り、薬草と木材を持ち帰ります。弓・槍と活力・剛健の加護が役立ちます。",
+      "recommendedRank": "3",
+      "recommendedMembers": 3,
+      "weaponTypes": ["bow", "spear"],
+      "blessingIds": ["tech-vitality", "tech-fused"],
+      "successMaterials": { "herb": "8", "wood": "4" }
+    },
+    {
+      "id": "survey",
+      "name": "遺構の資材調査",
+      "description": "遺構から魔力結晶と鉱石を回収します。杖・槌と剛力・活力の加護が役立ちます。",
+      "recommendedRank": "5",
+      "recommendedMembers": 2,
+      "weaponTypes": ["staff", "hammer"],
+      "blessingIds": ["tech-strength", "tech-vitality"],
+      "successMaterials": { "crystal": "4", "ore": "4" }
+    }
+  ],
+  "deliveries": [
+    {
+      "id": "relation-court", "name": "宮廷への復旧資材納品", "kind": "relation", "factionId": "C",
+      "materials": { "wood": "4", "ore": "2" }, "gold": "5", "trust": 5
+    },
+    {
+      "id": "relation-mages", "name": "魔法協会への調査資材納品", "kind": "relation", "factionId": "M",
+      "materials": { "crystal": "2", "herb": "2" }, "gold": "5", "trust": 5
+    },
+    {
+      "id": "relation-knights", "name": "騎士団への補修資材納品", "kind": "relation", "factionId": "K",
+      "materials": { "ore": "4", "wood": "2" }, "gold": "5", "trust": 5
+    },
+    {
+      "id": "relation-townspeople", "name": "住民への生活資材納品", "kind": "relation", "factionId": "T",
+      "materials": { "herb": "4", "wood": "2" }, "gold": "5", "trust": 5
+    },
+    {
+      "id": "equipment-sword", "name": "剣の製作資材納品", "kind": "equipment", "weaponType": "sword",
+      "materials": { "ore": "20", "wood": "8" }, "gold": "0", "trust": 0
+    },
+    {
+      "id": "equipment-spear", "name": "槍の製作資材納品", "kind": "equipment", "weaponType": "spear",
+      "materials": { "wood": "20", "ore": "10" }, "gold": "0", "trust": 0
+    },
+    {
+      "id": "equipment-hammer", "name": "槌の製作資材納品", "kind": "equipment", "weaponType": "hammer",
+      "materials": { "ore": "28", "wood": "8" }, "gold": "0", "trust": 0
+    },
+    {
+      "id": "equipment-bow", "name": "弓の製作資材納品", "kind": "equipment", "weaponType": "bow",
+      "materials": { "wood": "20", "herb": "4" }, "gold": "0", "trust": 0
+    },
+    {
+      "id": "equipment-staff", "name": "杖の製作資材納品", "kind": "equipment", "weaponType": "staff",
+      "materials": { "wood": "16", "crystal": "8" }, "gold": "0", "trust": 0
+    },
+    {
+      "id": "gold-wood", "name": "木材の金銭納品", "kind": "gold",
+      "materials": { "wood": "4" }, "gold": "20", "trust": 0
+    },
+    {
+      "id": "gold-ore", "name": "鉱石の金銭納品", "kind": "gold",
+      "materials": { "ore": "4" }, "gold": "30", "trust": 0
+    },
+    {
+      "id": "gold-herb", "name": "薬草の金銭納品", "kind": "gold",
+      "materials": { "herb": "4" }, "gold": "15", "trust": 0
+    },
+    {
+      "id": "gold-crystal", "name": "魔力結晶の金銭納品", "kind": "gold",
+      "materials": { "crystal": "2" }, "gold": "35", "trust": 0
+    }
+  ]
+}

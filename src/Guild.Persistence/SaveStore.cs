@@ -5,7 +5,12 @@ namespace Guild.Persistence;
 
 public sealed record HistoryEntry(string EventId, string ActorId, string RankBlock, string Kind,
     string BeforeJson, string AfterJson, string Text);
-public sealed record StoredHistory(long Sequence, string EventId, string ActorId, string Text);
+public sealed record StoredHistory(long Sequence, string EventId, string ActorId, string Text)
+{
+    public string Kind { get; init; } = "";
+    public string BeforeJson { get; init; } = "";
+    public string AfterJson { get; init; } = "";
+}
 public sealed record ChangeSet(long ExpectedRevision, string CommandId, string CommandHash,
     string ResultMessage, IReadOnlyDictionary<string, string> Documents, IReadOnlyList<HistoryEntry> History);
 public sealed record CommitResult(bool Applied, long Revision, string Message);
@@ -59,11 +64,12 @@ public sealed class SaveStore : IDisposable
     public long Revision { get { lock (gate) return long.Parse((string)Scalar("SELECT value FROM metadata WHERE key='revision';")!, CultureInfo.InvariantCulture); } }
 
     /// <summary>Protect logical JSON document migrations even when SQLite's table schema is unchanged.</summary>
-    public string BackupBeforeDocumentMigration()
+    public string BackupBeforeDocumentMigration(int targetVersion = 2)
     {
+        if (targetVersion < 1) throw new ArgumentOutOfRangeException(nameof(targetVersion));
         lock (gate)
         {
-            var backup = Path + ".before-documents-v2-" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture)
+            var backup = Path + ".before-documents-v" + targetVersion.ToString(CultureInfo.InvariantCulture) + "-" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture)
                 + "-" + Guid.NewGuid().ToString("N") + ".backup";
             using var destination = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = backup, Pooling = false }.ToString());
             destination.Open();
@@ -155,12 +161,15 @@ public sealed class SaveStore : IDisposable
         lock (gate)
         {
             using var command = connection.CreateCommand();
-            command.CommandText = "SELECT sequence,event_id,actor_id,text FROM history WHERE sequence>$after ORDER BY sequence LIMIT $limit;";
+            command.CommandText = "SELECT sequence,event_id,actor_id,text,kind,before_json,after_json FROM history WHERE sequence>$after ORDER BY sequence LIMIT $limit;";
             command.Parameters.AddWithValue("$after", afterSequence);
             command.Parameters.AddWithValue("$limit", limit);
             using var reader = command.ExecuteReader();
             var records = new List<StoredHistory>();
-            while (reader.Read()) records.Add(new(reader.GetInt64(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)));
+            while (reader.Read()) records.Add(new(reader.GetInt64(0), reader.GetString(1), reader.GetString(2), reader.GetString(3))
+            {
+                Kind = reader.GetString(4), BeforeJson = reader.GetString(5), AfterJson = reader.GetString(6)
+            });
             return records;
         }
     }

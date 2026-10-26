@@ -60,6 +60,7 @@ public sealed partial class BattleSimulation
                 throw new ArgumentException("Invasion requires a unique expedition party of 1..10 owned adventurers.");
             State.RuleSetId = "invasion-v1";
         }
+        else State.RuleSetId = "defense-v2";
         foreach (var initial in IsInvasion ? frozen.Units.OrderBy(u =>
             frozen.PartyIds!.Contains(u.Id) ? frozen.PartyIds.IndexOf(u.Id) : int.MaxValue) : frozen.Units.AsEnumerable())
         {
@@ -104,7 +105,7 @@ public sealed partial class BattleSimulation
         State.Setup.Content.EnsureValid();
         stage = State.Setup.Content.Stages.Single(s => s.Id == State.Setup.StageId);
         if ((IsInvasion && State.RuleSetId != "invasion-v1")
-            || (!IsInvasion && State.RuleSetId is not (null or "defense-v1")))
+            || (!IsInvasion && State.RuleSetId is not (null or "defense-v1" or "defense-v2")))
             throw new NotSupportedException("未対応の戦闘ルールです。保存データは変更していません。");
         if (IsInvasion && (State.Setup.PartyIds is null || State.Setup.PartyIds.Count is < 1 or > 10
             || State.Setup.PartyIds.Distinct(StringComparer.Ordinal).Count() != State.Setup.PartyIds.Count
@@ -283,24 +284,40 @@ public sealed partial class BattleSimulation
     {
         if (IsInvasion) { MoveInvasion(unit); return; }
         if (Stunned(unit) || unit.Action is not null || State.TimeMs < unit.HardLockUntilMs) return;
-        Rational slow = 0;
-        foreach (var status in unit.Statuses)
-            if (status.Kind == "slow" && status.ExpiresAtMs > State.TimeMs) slow = Rational.Max(slow, status.Strength);
-        var centiSpeed = unit.IsEnemy ? unit.EnemySpeedCentiPerSecond
-            : (unit.PreparedMoveCentiPerSecond ?? (300 + new Rational(5) * unit.Stats.Agi))
-                * Rational.Max(0, unit.MoveMultiplier + unit.LevelMoveMultiplier - 1);
+        var centiSpeed = EffectiveMoveCentiPerSecond(unit);
         if (!moveDistanceCache.TryGetValue(centiSpeed, out var remaining))
         {
             remaining = centiSpeed * new Rational(TickMs, 100000);
             moveDistanceCache[centiSpeed] = remaining;
         }
-        if (slow > 0) remaining *= Rational.Clamp(1 - slow, 0, 1);
         if (unit.IsEnemy)
         {
             if (unit.AttacksAdventurers && Opponents(unit).Any(t => InRange(unit, t, unit.RangeCenti))) return;
             while (remaining > 0 && unit.PathIndex < stage.Path.Count)
             {
                 var next = stage.Path[unit.PathIndex];
+                if (State.RuleSetId == "defense-v2" && unit.AttacksAdventurers)
+                {
+                    var startX = unit.X; var startY = unit.Y;
+                    // Preview this single orthogonal edge only; a bend must not
+                    // be replaced by a diagonal collision segment.
+                    var unused = MoveAxisAligned(unit, next.X, next.Y, remaining);
+                    var endX = unit.X; var endY = unit.Y;
+                    unit.X = startX; unit.Y = startY;
+                    var contact = FindDefenseContact(unit, startX, startY, endX, endY);
+                    if (contact is { } point)
+                    {
+                        unit.X = point.X; unit.Y = point.Y;
+                        if (unit.X == next.X && unit.Y == next.Y) unit.PathIndex++;
+                        // Action selection remains at the end of the fixed tick.
+                        // Discard the rest of this movement budget on contact.
+                        return;
+                    }
+                    unit.X = endX; unit.Y = endY;
+                    remaining = unused;
+                    if (unit.X == next.X && unit.Y == next.Y) unit.PathIndex++; else break;
+                    continue;
+                }
                 remaining = MoveAxisAligned(unit, next.X, next.Y, remaining);
                 if (unit.X == next.X && unit.Y == next.Y) unit.PathIndex++; else break;
             }
@@ -315,6 +332,36 @@ public sealed partial class BattleSimulation
         if (target is not null && InRange(unit, target, EffectiveRange(unit))) return;
         var destination = target is null ? (unit.AnchorX, unit.AnchorY) : NearestReachableCell(unit, target);
         FollowGridPath(unit, destination.Item1, destination.Item2, remaining);
+    }
+
+    private (Rational X, Rational Y)? FindDefenseContact(CombatantState source,
+        Rational startX, Rational startY, Rational endX, Rational endY)
+    {
+        var radius = new Rational(source.RangeCenti, 100);
+        Rational? bestEntry = null;
+        Rational bestDistance = 0;
+        long bestSequence = 0;
+        (Rational X, Rational Y)? bestPoint = null;
+        foreach (var target in Opponents(source))
+        {
+            var entry = CombatMath.SegmentCircleEntry(startX, startY, endX, endY, target.X, target.Y, radius);
+            if (entry is null) continue;
+            var x = startX + entry.Value * (endX - startX);
+            var y = startY + entry.Value * (endY - startY);
+            var distance = CombatMath.DistanceSquared(x, y, target.X, target.Y);
+            // SegmentCircleEntry's downward square-root approximation places
+            // entry on the inside of the circle, including exact tangencies.
+            if (distance > radius * radius)
+                throw new InvalidOperationException("Defense contact must remain inside the attack range.");
+            var comparison = bestEntry is null ? -1 : entry.Value.CompareTo(bestEntry.Value);
+            if (comparison == 0) comparison = distance.CompareTo(bestDistance);
+            if (comparison == 0) comparison = target.SpawnSequence.CompareTo(bestSequence);
+            if (comparison < 0)
+            {
+                bestEntry = entry; bestDistance = distance; bestSequence = target.SpawnSequence; bestPoint = (x, y);
+            }
+        }
+        return bestPoint;
     }
 
     private static Rational MoveAxisAligned(CombatantState unit, Rational targetX, Rational targetY, Rational available)
@@ -404,6 +451,24 @@ public sealed partial class BattleSimulation
 
     private int EffectiveRange(CombatantState unit) => Math.Max(1,
         (int)(unit.RangeCenti * (unit.RangeMultiplier + unit.LevelRangeMultiplier - 1)).Floor());
+    private static Rational EffectiveAttackIntervalMs(CombatantState unit)
+    {
+        var interval = unit.IsEnemy ? unit.BaseAttackIntervalMs
+            : (unit.PreparedAttackIntervalMs ?? (unit.BaseAttackIntervalMs * 100 / (100 + Rational.Max(1, unit.Stats.Agi))))
+                * Rational.Max(new Rational(1, 10), unit.IntervalMultiplier + unit.LevelIntervalMultiplier - 1);
+        return Rational.Max(250, interval);
+    }
+
+    private Rational EffectiveMoveCentiPerSecond(CombatantState unit)
+    {
+        var speed = unit.IsEnemy ? unit.EnemySpeedCentiPerSecond
+            : (unit.PreparedMoveCentiPerSecond ?? (300 + new Rational(5) * unit.Stats.Agi))
+                * Rational.Max(0, unit.MoveMultiplier + unit.LevelMoveMultiplier - 1);
+        Rational slow = 0;
+        foreach (var status in unit.Statuses)
+            if (status.Kind == "slow" && status.ExpiresAtMs > State.TimeMs) slow = Rational.Max(slow, status.Strength);
+        return speed * Rational.Clamp(1 - slow, 0, 1);
+    }
     private static bool InRange(CombatantState source, CombatantState target, int centi)
         => CombatMath.DistanceSquared(source.X, source.Y, target.X, target.Y) <= new Rational(centi * (long)centi, 10000);
     private IEnumerable<CombatantState> Opponents(CombatantState source)
@@ -488,10 +553,7 @@ public sealed partial class BattleSimulation
             unit.CurrentTargetId = target?.Id;
         }
         if (target is null || !ActionTargetAllowed(unit, target)) return;
-        var interval = unit.IsEnemy ? unit.BaseAttackIntervalMs
-            : (unit.PreparedAttackIntervalMs ?? (unit.BaseAttackIntervalMs * 100 / (100 + Rational.Max(1, unit.Stats.Agi))))
-                * Rational.Max(new Rational(1, 10), unit.IntervalMultiplier + unit.LevelIntervalMultiplier - 1);
-        interval = Rational.Max(250, interval);
+        var interval = EffectiveAttackIntervalMs(unit);
         unit.Action = MakeAction(unit, "attack", [target], 200);
         unit.AttackReadyAtMs = State.TimeMs + interval;
         unit.HardLockUntilMs = unit.AttackReadyAtMs;

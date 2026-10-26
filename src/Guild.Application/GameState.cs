@@ -7,7 +7,7 @@ namespace Guild.Application;
 
 public sealed class PlayerProfile
 {
-    public int FormatVersion { get; set; } = 2;
+    public int FormatVersion { get; set; } = 3;
     public BigInteger Resources { get; set; }
     public int Capacity { get; set; } = 10;
     public int ExpansionCount { get; set; }
@@ -21,6 +21,7 @@ public sealed class PlayerProfile
     public List<WeaponState> Weapons { get; set; } = [];
     public List<RankEventState> PendingEvents { get; set; } = [];
     public HashSet<string> DiscoveredRecipes { get; set; } = [];
+    public GuildEconomyState Economy { get; set; } = new();
 }
 
 public sealed class AdventurerState
@@ -78,7 +79,7 @@ public sealed class RankEventState
 
 public sealed class MatchSession
 {
-    public int FormatVersion { get; set; } = 2;
+    public int FormatVersion { get; set; } = 3;
     public string MatchId { get; set; } = "";
     public string AttemptId { get; set; } = "";
     public string Phase { get; set; } = "Preparation";
@@ -90,4 +91,5 @@ public sealed class MatchSession
     public PcgState? WaveStartGrowthRng { get; set; }
     public Dictionary<string, List<string>> LevelChoices { get; set; } = [];
     public Dictionary<string, BigInteger> StartingRanks { get; set; } = [];
+    public MatchEconomyState? Economy { get; set; }
 }

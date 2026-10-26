@@ -1,5 +1,11 @@
 # 技術仕様実装契約
 
+## 現在のローカル作業への案内
+
+この文書は初回0.2.0-dev実装時の契約を保持した履歴です。2026-10-25の0.4.0-dev（防衛判定と判断材料）の実装・検証には、[0.4機能仕様](player_decision_support_v0.4.0.md)、[0.4ローカル契約](release_contract_v0.4.0.md)、[0.4検証記録](player_decision_support_verification_v0.4.0.md)を使用します。正式baselineはv0.3.0で、現在の契約はローカルWindows ZIPまでです。以下の過去条件を現在版へ読み替えません。
+
+## 初回実装時の契約
+
 - 基準: v0.1.0。ローカル検証版: 0.2.0-dev。
 - 根拠: 2026-10-24に承認された「実装技術仕様案」とその実装依頼。
 - 方針: Godot 4.7.2 .NET / C# / .NET 10 / Microsoft.Data.Sqlite。端末内保存、Windows x64。
